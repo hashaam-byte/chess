@@ -1,14 +1,16 @@
-type Piece = { type: "king"|"queen"|"rook"|"bishop"|"knight"|"pawn"; color: "white"|"black" };
+import Image from "next/image";
+
+type Piece = { type: "king" | "queen" | "rook" | "bishop" | "knight" | "pawn"; color: "white" | "black" };
 type Square = Piece | null;
 
-const FILES = ["a","b","c","d","e","f","g","h"];
+const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 export function squareName(row: number, col: number) {
   return `${FILES[col]}${8 - row}`;
 }
 
 function startingPosition(): Square[][] {
-  const back: Piece["type"][] = ["rook","knight","bishop","queen","king","bishop","knight","rook"];
+  const back: Piece["type"][] = ["rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"];
   const board: Square[][] = Array.from({ length: 8 }, () => Array(8).fill(null));
   for (let c = 0; c < 8; c++) {
     board[0][c] = { type: back[c], color: "black" };
@@ -19,9 +21,13 @@ function startingPosition(): Square[][] {
   return board;
 }
 
+function describeSquare(sq: string, piece: Square) {
+  return piece ? `${sq}, ${piece.color} ${piece.type}` : `${sq}, empty`;
+}
+
 export default function Board({
   position = startingPosition(),
-  size = 560,
+  maxSize = 560,
   selected,
   legalTargets = [],
   lastMove,
@@ -29,7 +35,8 @@ export default function Board({
   onSquareClick,
 }: {
   position?: Square[][];
-  size?: number;
+  /** Max width/height in px — the board still shrinks to fit smaller screens. */
+  maxSize?: number;
   selected?: string | null;
   legalTargets?: string[];
   lastMove?: { from: string; to: string } | null;
@@ -38,24 +45,33 @@ export default function Board({
 }) {
   return (
     <div
-      className="relative inline-block"
+      className="relative"
       style={{
-        padding: size * 0.045,
+        width: `min(${maxSize}px, 92vw)`,
+        aspectRatio: "1 / 1",
+        padding: "4.5%",
         background: "#272727",
         borderRadius: 6,
         boxShadow: "0 20px 40px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.4)",
+        boxSizing: "border-box",
       }}
     >
       <div
         style={{
           position: "absolute",
-          inset: size * 0.03,
+          inset: "4.5%",
+          margin: "1.5%",
           border: "1.5px solid #C9A24B",
           borderRadius: 2,
           pointerEvents: "none",
         }}
       />
-      <div className="relative grid grid-cols-8 grid-rows-8" style={{ width: size, height: size }}>
+      <div
+        className="relative grid grid-cols-8 grid-rows-8"
+        style={{ width: "100%", height: "100%" }}
+        role="grid"
+        aria-label="Chess board"
+      >
         {position.map((row, r) =>
           row.map((piece, c) => {
             const sq = squareName(r, c);
@@ -65,15 +81,21 @@ export default function Board({
             const isTarget = legalTargets.includes(sq);
             const isLastMove = lastMove && (lastMove.from === sq || lastMove.to === sq);
             const isCheck = checkSquare === sq;
+            const Tag = onSquareClick ? "button" : "div";
 
             return (
-              <div
+              <Tag
                 key={sq}
-                onClick={() => onSquareClick?.(sq)}
-                className="relative flex items-center justify-center"
+                type={onSquareClick ? "button" : undefined}
+                onClick={onSquareClick ? () => onSquareClick(sq) : undefined}
+                role="gridcell"
+                aria-label={describeSquare(sq, piece)}
+                aria-selected={isSelected}
+                className="relative flex items-center justify-center appearance-none border-0 p-0 m-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#C9A24B]"
                 style={{
                   background: isDark ? "#323233" : "#E8D4BC",
                   cursor: onSquareClick ? "pointer" : "default",
+                  font: "inherit",
                 }}
               >
                 {isLastMove && (
@@ -107,21 +129,24 @@ export default function Board({
                 )}
 
                 {piece && (
-                  <img
-                    src={`/pieces/${piece.color}_${piece.type}.png`}
-                    alt={`${piece.color} ${piece.type}`}
-                    draggable={false}
+                  <div
+                    className="relative"
                     style={{
                       height: "82%",
                       width: "82%",
-                      objectFit: "contain",
-                      filter: "drop-shadow(0 3px 3px rgba(0,0,0,0.35))",
-                      userSelect: "none",
-                      position: "relative",
                       zIndex: 1,
-                      transform: piece.color === "black" ? "scaleX(-1)" : undefined,
+                      filter: "drop-shadow(0 3px 3px rgba(0,0,0,0.35))",
                     }}
-                  />
+                  >
+                    <Image
+                      src={`/pieces/${piece.color}_${piece.type}.png`}
+                      alt=""
+                      fill
+                      sizes="(max-width: 640px) 10vw, 70px"
+                      style={{ objectFit: "contain", userSelect: "none" }}
+                      draggable={false}
+                    />
+                  </div>
                 )}
 
                 {isTarget && !piece && (
@@ -136,7 +161,7 @@ export default function Board({
                     style={{ boxShadow: "inset 0 0 0 4px rgba(201,162,75,0.75)", zIndex: 2 }}
                   />
                 )}
-              </div>
+              </Tag>
             );
           })
         )}
