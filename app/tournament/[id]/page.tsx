@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import GameBoard from "@/components/GameBoard";
+import GameBoard from "../../../components/GameBoard";
 import { recordMatchResult, getChampion, type Tournament, type BracketMatch } from "../../../lib/tournament";
 import { getTournament, saveTournament } from "../../../lib/tournamentStore";
 import { recordMatch, getPlayer } from "../../../lib/players";
