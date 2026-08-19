@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createTournament } from "@/lib/tournament";
-import { listTournaments, saveTournament } from "@/lib/tournamentStore";
-import { listPlayers, ensurePlayer, type Player } from "@/lib/players";
-import type { Tournament } from "@/lib/tournament";
+import { createTournament } from "../../lib/tournament";
+import { listTournaments, saveTournament } from "../../lib/tournamentStore";
+import { listPlayers, ensurePlayer, type Player } from "../../lib/players";
+import type { Tournament } from "../../lib/tournament";
 
 export default function TournamentListPage() {
   const router = useRouter();
