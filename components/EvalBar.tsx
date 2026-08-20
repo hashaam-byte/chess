@@ -28,29 +28,29 @@ export default function EvalBar({ evalScore, pending }: { evalScore: EngineEval 
       <span
         className="w-1.5 h-1.5 rounded-full flex-shrink-0"
         style={{
-          background: pending ? "#caa356" : "#3d3327",
-          boxShadow: pending ? "0 0 6px #caa356" : "none",
+          background: pending ? "var(--cx-accent)" : "#3d3327",
+          boxShadow: pending ? "0 0 6px var(--cx-accent)" : "none",
           animation: pending ? "dlEvalPulse 1s ease-in-out infinite" : "none",
         }}
         title="Live Stockfish evaluation"
       />
       <div
         className="relative flex-1 rounded-full overflow-hidden"
-        style={{ width: 16, background: "#1c1712", border: "1px solid #332c22", minHeight: 80 }}
+        style={{ width: 16, background: "#111116", border: "1px solid #23232c", minHeight: 80 }}
       >
         <div
           className="absolute bottom-0 left-0 right-0"
           style={{
             height: `${pct}%`,
-            background: "linear-gradient(180deg, #f6efe0, #d8cbac)",
+            background: "linear-gradient(180deg, #f1f0f4, #c9c6d6)",
             transition: "height 500ms cubic-bezier(0.22,1,0.36,1)",
           }}
         />
-        <div className="absolute left-0 right-0" style={{ top: "50%", height: 1, background: "rgba(202,163,86,0.45)" }} />
+        <div className="absolute left-0 right-0" style={{ top: "50%", height: 1, background: "color-mix(in srgb, var(--cx-accent) 45%, transparent)" }} />
       </div>
       <span
         className="text-[10px] font-semibold tabular-nums transition-colors duration-300 flex-shrink-0"
-        style={{ color: favorsWhite ? "#e9dfc9" : "#8f887c" }}
+        style={{ color: favorsWhite ? "#e5e3ec" : "#8f8a9c" }}
       >
         {label || "0.0"}
       </span>

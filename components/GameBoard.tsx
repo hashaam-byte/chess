@@ -310,7 +310,7 @@ export default function GameBoard({
         />
         <span
           className="text-xs sm:text-sm text-center px-3 pt-1.5 font-medium transition-colors duration-300"
-          style={{ color: gameOver ? "#caa356" : inCheck ? "#e0685f" : "#8f887c" }}
+          style={{ color: gameOver ? "var(--cx-accent)" : inCheck ? "#e0685f" : "#8f8a9c" }}
           role="status"
           aria-live="polite"
         >
@@ -342,7 +342,7 @@ export default function GameBoard({
             className="absolute inset-0 flex items-center justify-center dl-fade-in"
             style={{ background: "rgba(13,17,20,0.8)", backdropFilter: "blur(2px)" }}
           >
-            <div className="bg-[#1c1712] border border-[#3d3327] rounded-xl p-4 flex gap-3 shadow-2xl dl-pop-in">
+            <div className="bg-[#111116] border border-[#3d3327] rounded-xl p-4 flex gap-3 shadow-2xl dl-pop-in">
               {PROMO_ORDER.map(({ flag, type }) => (
                 <button
                   key={flag}
@@ -367,7 +367,7 @@ export default function GameBoard({
       {/* Move list */}
       {history.length > 0 && (
         <div
-          className="w-full text-xs text-[#a49a86] overflow-y-auto rounded-lg border border-[#332c22] bg-[#15110d]"
+          className="w-full text-xs text-[#8f8a9c] overflow-y-auto rounded-lg border border-[#23232c] bg-[#0c0c10]"
           style={{ maxWidth: 560, maxHeight: 140 }}
         >
           <table className="w-full">
@@ -378,12 +378,12 @@ export default function GameBoard({
                 const whiteQ = analysis?.[whiteIdx];
                 const blackQ = analysis?.[blackIdx];
                 return (
-                  <tr key={n} className="odd:bg-[#1c1712]">
-                    <td className="px-2 py-1 w-8 text-[#6b6153]">{n}.</td>
-                    <td className="px-2 py-1 font-medium text-[#c9bfae]">
+                  <tr key={n} className="odd:bg-[#111116]">
+                    <td className="px-2 py-1 w-8 text-[#5c5968]">{n}.</td>
+                    <td className="px-2 py-1 font-medium text-[#c8c6d0]">
                       <MoveCell san={white} quality={whiteQ} />
                     </td>
-                    <td className="px-2 py-1 font-medium text-[#c9bfae]">
+                    <td className="px-2 py-1 font-medium text-[#c8c6d0]">
                       {black && <MoveCell san={black} quality={blackQ} />}
                     </td>
                   </tr>
@@ -404,7 +404,7 @@ export default function GameBoard({
             {!resolved && (
               <button
                 onClick={commitResult}
-                className="px-5 py-2 rounded-full bg-gradient-to-b from-[#dab766] to-[#caa356] text-[#1c1712] text-sm font-semibold shadow-lg shadow-black/30 hover:brightness-110 transition"
+                className="px-5 py-2 rounded-full bg-gradient-to-b from-[var(--cx-accent-light)] to-[var(--cx-accent)] text-[#111116] text-sm font-semibold shadow-lg shadow-black/30 hover:brightness-110 transition"
               >
                 Confirm result
               </button>
@@ -414,7 +414,7 @@ export default function GameBoard({
                 onClick={reviewGame}
                 disabled={reviewing}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition disabled:opacity-60"
-                style={{ color: "#c9bfae", borderColor: "#332c22" }}
+                style={{ color: "#c8c6d0", borderColor: "#23232c" }}
               >
                 <StockfishIcon pending={reviewing} />
                 {reviewing ? `Reviewing… ${reviewProgress}/${history.length}` : "Review game with Stockfish"}
@@ -426,7 +426,7 @@ export default function GameBoard({
             <button
               onClick={undoMove}
               disabled={history.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#a49a86] border border-[#332c22] hover:text-[#EDEAE1] hover:border-[#54493a] transition disabled:opacity-30 disabled:hover:text-[#a49a86] disabled:hover:border-[#332c22]"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition disabled:opacity-30 disabled:hover:text-[#8f8a9c] disabled:hover:border-[#23232c]"
             >
               <UndoIcon /> Undo move
             </button>
@@ -440,7 +440,7 @@ export default function GameBoard({
         )}
         <button
           onClick={resetGame}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#a49a86] border border-[#332c22] hover:text-[#EDEAE1] hover:border-[#54493a] transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition"
         >
           <ResetIcon /> Reset board
         </button>
@@ -529,16 +529,16 @@ function PlayerCard({
       <div className="flex items-center gap-1.5" style={{ flexDirection: align === "right" ? "row-reverse" : "row" }}>
         <span
           className="w-1.5 h-1.5 rounded-full transition-colors duration-300"
-          style={{ background: active ? "#caa356" : "#3d3327", boxShadow: active ? "0 0 6px #caa356" : "none" }}
+          style={{ background: active ? "var(--cx-accent)" : "#3d3327", boxShadow: active ? "0 0 6px var(--cx-accent)" : "none" }}
         />
         <span
           className="text-sm font-medium transition-colors duration-300"
-          style={{ color: active ? "#EDEAE1" : "#8f887c" }}
+          style={{ color: active ? "#F5F3F7" : "#8f8a9c" }}
         >
           {label}
         </span>
         {accuracy != null && (
-          <span className="text-[10px] font-semibold" style={{ color: "#caa356" }}>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--cx-accent)" }}>
             {accuracy.toFixed(1)}%
           </span>
         )}

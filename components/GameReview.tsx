@@ -56,15 +56,15 @@ export default function GameReview({
   return (
     <div
       className="w-full rounded-xl p-4 dl-fade-in"
-      style={{ maxWidth: 560, background: "#15110d", border: "1px solid #332c22" }}
+      style={{ maxWidth: 560, background: "#0c0c10", border: "1px solid #23232c" }}
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-semibold" style={{ color: "#f1e9d8" }}>
+        <span className="text-xs font-semibold" style={{ color: "#F5F3F7" }}>
           Game Review
         </span>
         <div className="flex items-center gap-3 text-[11px]">
-          <span style={{ color: "#e9dfc9" }}>{whiteLabel}: {whiteAccuracy.toFixed(1)}%</span>
-          <span style={{ color: "#8f887c" }}>{blackLabel}: {blackAccuracy.toFixed(1)}%</span>
+          <span style={{ color: "#e5e3ec" }}>{whiteLabel}: {whiteAccuracy.toFixed(1)}%</span>
+          <span style={{ color: "#8f8a9c" }}>{blackLabel}: {blackAccuracy.toFixed(1)}%</span>
         </div>
       </div>
 
@@ -76,14 +76,14 @@ export default function GameReview({
           <rect x="0" y={mid} width={W} height={mid} />
         </clipPath>
 
-        <path d={areaPath} fill="#e9dfc9" opacity="0.85" clipPath="url(#dlUpperHalf)" />
+        <path d={areaPath} fill="#e5e3ec" opacity="0.85" clipPath="url(#dlUpperHalf)" />
         <path d={areaPath} fill="#000000" opacity="0.55" clipPath="url(#dlLowerHalf)" />
-        <line x1="0" y1={mid} x2={W} y2={mid} stroke="rgba(202,163,86,0.5)" strokeWidth="1" />
-        <path d={linePath} fill="none" stroke="#caa356" strokeWidth="1.4" />
+        <line x1="0" y1={mid} x2={W} y2={mid} style={{ stroke: "color-mix(in srgb, var(--cx-accent) 50%, transparent)" }} strokeWidth="1" />
+        <path d={linePath} fill="none" style={{ stroke: "var(--cx-accent)" }} strokeWidth="1.4" />
 
         {markers.map(({ a, i }) => {
           const [x, y] = points[i + 1]; // +1: points[0] is the pre-game start position
-          return <circle key={i} cx={x} cy={y} r="2.6" fill={QUALITY_COLOR[a.quality]} stroke="#15110d" strokeWidth="1" />;
+          return <circle key={i} cx={x} cy={y} r="2.6" fill={QUALITY_COLOR[a.quality]} stroke="#0c0c10" strokeWidth="1" />;
         })}
       </svg>
     </div>

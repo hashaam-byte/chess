@@ -4,9 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import GameBoard from "../../../components/GameBoard";
+import SiteNav from "../../../components/SiteNav";
 import { recordMatchResult, getChampion, type Tournament, type BracketMatch } from "../../../lib/tournament";
 import { getTournament, saveTournament } from "../../../lib/tournamentStore";
-import { recordMatch, getPlayer } from "../../../lib/players";
+import { recordMatch, getPlayer } from "@../../../lib/players";
 
 export default function TournamentPage() {
   const params = useParams<{ id: string }>();
@@ -15,10 +16,10 @@ export default function TournamentPage() {
 
   if (tournament === null) {
     return (
-      <div className="dl-page min-h-screen flex items-center justify-center" style={{ background: "#0d1114", color: "#EDEAE1" }}>
+      <div className="dl-page min-h-screen flex items-center justify-center" style={{ background: "#07070A", color: "#F5F3F7" }}>
         <div className="text-center">
-          <p className="text-sm text-[#8f887c] mb-3">Tournament not found on this device.</p>
-          <Link href="/tournament" className="text-[#caa356] text-sm hover:underline">
+          <p className="text-sm text-[#8f8a9c] mb-3">Tournament not found on this device.</p>
+          <Link href="/tournament" className="text-[var(--cx-accent)] text-sm hover:underline">
             ← Back to tournaments
           </Link>
         </div>
@@ -50,22 +51,25 @@ export default function TournamentPage() {
   }
 
   return (
-    <div className="dl-page min-h-screen flex flex-col items-center p-6 sm:p-10">
+    <div className="dl-page min-h-screen flex flex-col items-center">
       <style>{`
         .dl-page {
           background:
-            radial-gradient(ellipse 700px 420px at 50% -8%, rgba(202,163,86,0.10), transparent 65%),
-            radial-gradient(ellipse 600px 500px at 100% 100%, rgba(202,163,86,0.05), transparent 60%),
-            #0d1114;
-          color: #EDEAE1;
+            radial-gradient(ellipse 700px 420px at 50% -8%, color-mix(in srgb, var(--cx-accent) 10%, transparent), transparent 65%),
+            radial-gradient(ellipse 600px 500px at 100% 100%, color-mix(in srgb, var(--cx-accent) 5%, transparent), transparent 60%),
+            #07070A;
+          color: #F5F3F7;
         }
       `}</style>
 
+      <SiteNav />
+
+      <div className="w-full flex flex-col items-center p-6 sm:p-10">
       <div className="w-full flex items-center justify-between" style={{ maxWidth: 900 }}>
-        <h1 className="font-serif text-2xl sm:text-[28px] tracking-wide" style={{ color: "#f1e9d8" }}>
+        <h1 className="font-serif font-semibold text-2xl sm:text-[28px] tracking-tight" style={{ color: "#F5F3F7" }}>
           {tournament.name}
         </h1>
-        <Link href="/tournament" className="text-xs text-[#8f887c] hover:text-[#EDEAE1] transition-colors">
+        <Link href="/tournament" className="text-xs text-[#8f8a9c] hover:text-[#F5F3F7] transition-colors">
           ← All tournaments
         </Link>
       </div>
@@ -73,7 +77,7 @@ export default function TournamentPage() {
       {champion && (
         <div
           className="mt-4 mb-2 px-5 py-2 rounded-full text-sm font-semibold"
-          style={{ background: "rgba(202,163,86,0.12)", border: "1px solid rgba(202,163,86,0.3)", color: "#caa356" }}
+          style={{ background: "color-mix(in srgb, var(--cx-accent) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--cx-accent) 30%, transparent)", color: "var(--cx-accent)" }}
         >
           🏆 {champion} wins the tournament
         </div>
@@ -83,7 +87,7 @@ export default function TournamentPage() {
         <div className="flex gap-8 pb-4" style={{ minWidth: tournament.rounds.length * 220 }}>
           {tournament.rounds.map((round, r) => (
             <div key={r} className="flex flex-col gap-4 justify-center" style={{ width: 200, flexShrink: 0 }}>
-              <div className="text-xs uppercase tracking-wider text-[#8f887c] text-center">
+              <div className="text-xs uppercase tracking-wider text-[#8f8a9c] text-center">
                 {r === tournament.rounds.length - 1 ? "Final" : `Round ${r + 1}`}
               </div>
               {round.map((match) => (
@@ -103,18 +107,18 @@ export default function TournamentPage() {
             className="w-full rounded-2xl p-5 sm:p-7 flex flex-col items-center my-8"
             style={{
               maxWidth: 640,
-              background: "linear-gradient(180deg, #171310, #14100c)",
-              border: "1px solid rgba(202,163,86,0.2)",
+              background: "linear-gradient(180deg, #17171f, #0c0c10)",
+              border: "1px solid color-mix(in srgb, var(--cx-accent) 20%, transparent)",
               boxShadow: "0 30px 60px -20px rgba(0,0,0,0.8)",
             }}
           >
             <div className="w-full flex items-center justify-between mb-4" style={{ maxWidth: 560 }}>
-              <span className="text-xs text-[#8f887c]">
+              <span className="text-xs text-[#8f8a9c]">
                 {activeMatch.round === tournament.rounds.length - 1 ? "Final" : `Round ${activeMatch.round + 1}`}
               </span>
               <button
                 onClick={() => setActiveMatch(null)}
-                className="text-xs text-[#8f887c] hover:text-[#EDEAE1] transition"
+                className="text-xs text-[#8f8a9c] hover:text-[#F5F3F7] transition"
               >
                 Close without playing ✕
               </button>
@@ -128,6 +132,7 @@ export default function TournamentPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -141,19 +146,19 @@ function MatchCard({ match, onPlay }: { match: BracketMatch; onPlay: () => void 
     <div
       className="rounded-xl p-3 text-sm"
       style={{
-        background: match.winner ? "rgba(202,163,86,0.05)" : "rgba(255,255,255,0.02)",
-        border: `1px solid ${match.winner ? "rgba(202,163,86,0.2)" : "rgba(255,255,255,0.06)"}`,
+        background: match.winner ? "color-mix(in srgb, var(--cx-accent) 5%, transparent)" : "rgba(255,255,255,0.02)",
+        border: `1px solid ${match.winner ? "color-mix(in srgb, var(--cx-accent) 20%, transparent)" : "rgba(255,255,255,0.06)"}`,
       }}
     >
       <PlayerLine name={match.playerA} rating={ratingA} won={match.winner === match.playerA} />
       <div className="my-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
       <PlayerLine name={match.playerB} rating={ratingB} won={match.winner === match.playerB} />
 
-      {match.bye && <div className="text-[10px] text-[#6b6153] mt-2">Bye — advances automatically</div>}
+      {match.bye && <div className="text-[10px] text-[#5c5968] mt-2">Bye — advances automatically</div>}
       {ready && (
         <button
           onClick={onPlay}
-          className="mt-2 w-full px-3 py-1.5 rounded-full text-xs font-medium bg-[#caa356] text-[#1c1712] hover:brightness-110 transition"
+          className="mt-2 w-full px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--cx-accent)] text-[#111116] hover:brightness-110 transition"
         >
           Play match
         </button>
@@ -165,10 +170,10 @@ function MatchCard({ match, onPlay }: { match: BracketMatch; onPlay: () => void 
 function PlayerLine({ name, rating, won }: { name: string | null; rating: number | null; won: boolean }) {
   return (
     <div className="flex items-center justify-between">
-      <span style={{ color: name ? (won ? "#caa356" : "#c9bfae") : "#5c534a", fontWeight: won ? 600 : 400 }}>
+      <span style={{ color: name ? (won ? "var(--cx-accent)" : "#c8c6d0") : "#5c534a", fontWeight: won ? 600 : 400 }}>
         {name ?? "TBD"}
       </span>
-      {rating !== null && <span className="text-[11px] text-[#6b6153]">{rating}</span>}
+      {rating !== null && <span className="text-[11px] text-[#5c5968]">{rating}</span>}
     </div>
   );
 }

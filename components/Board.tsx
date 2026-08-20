@@ -84,9 +84,9 @@ export default function Board({
         aspectRatio: "1 / 1",
         padding: "4.5%",
         borderRadius: 8,
-        background: "linear-gradient(155deg, #241d17 0%, #17120e 55%, #1c1610 100%)",
+        background: "linear-gradient(155deg, #17171f 0%, #0a0a0d 55%, #0f0f14 100%)",
         boxShadow:
-          "0 24px 48px -16px rgba(0,0,0,0.65), 0 0 0 1px rgba(202,163,86,0.15), inset 0 1px 0 rgba(255,255,255,0.04)",
+          "0 24px 48px -16px rgba(0,0,0,0.65), 0 0 0 1px color-mix(in srgb, var(--cx-accent) 15%, transparent), inset 0 1px 0 rgba(255,255,255,0.04)",
         boxSizing: "border-box",
       }}
     >
@@ -95,9 +95,9 @@ export default function Board({
           position: "absolute",
           inset: "4.5%",
           margin: "1.5%",
-          border: "1.5px solid #caa356",
+          border: "1.5px solid var(--cx-accent)",
           borderRadius: 3,
-          boxShadow: "0 0 14px rgba(202,163,86,0.18)",
+          boxShadow: "0 0 14px color-mix(in srgb, var(--cx-accent) 18%, transparent)",
           pointerEvents: "none",
         }}
       />
@@ -127,15 +127,15 @@ export default function Board({
                 role="gridcell"
                 aria-label={describeSquare(sq, piece)}
                 aria-selected={isSelected}
-                className="dl-square relative flex items-center justify-center appearance-none border-0 p-0 m-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#caa356]"
+                className="dl-square relative flex items-center justify-center appearance-none border-0 p-0 m-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--cx-accent)]"
                 style={{
-                  background: isDark ? "#332a22" : "#ecdfc4",
+                  background: isDark ? "#1a1a24" : "#d8d6e2",
                   cursor: onSquareClick ? "pointer" : "default",
                   font: "inherit",
                 }}
               >
                 {isLastMove && (
-                  <div className="absolute inset-0" style={{ background: "#caa356", opacity: 0.26 }} />
+                  <div className="absolute inset-0" style={{ background: "var(--cx-accent)", opacity: 0.26 }} />
                 )}
                 {isCheck && (
                   <div
@@ -148,14 +148,14 @@ export default function Board({
                 {isSelected && (
                   <div
                     className="absolute inset-0"
-                    style={{ boxShadow: "inset 0 0 0 3px #caa356, inset 0 0 18px rgba(202,163,86,0.35)" }}
+                    style={{ boxShadow: "inset 0 0 0 3px var(--cx-accent), inset 0 0 18px color-mix(in srgb, var(--cx-accent) 35%, transparent)" }}
                   />
                 )}
 
                 {isLastRank && (
                   <span
                     className="absolute bottom-[3px] right-[5px] text-[10px] font-semibold select-none leading-none"
-                    style={{ color: isDark ? "#ecdfc4" : "#332a22", opacity: 0.75, zIndex: 2 }}
+                    style={{ color: isDark ? "#d8d6e2" : "#1a1a24", opacity: 0.75, zIndex: 2 }}
                   >
                     {FILES[c]}
                   </span>
@@ -163,7 +163,7 @@ export default function Board({
                 {c === 0 && (
                   <span
                     className="absolute top-[3px] left-[5px] text-[10px] font-semibold select-none leading-none"
-                    style={{ color: isDark ? "#ecdfc4" : "#332a22", opacity: 0.75, zIndex: 2 }}
+                    style={{ color: isDark ? "#d8d6e2" : "#1a1a24", opacity: 0.75, zIndex: 2 }}
                   >
                     {8 - r}
                   </span>
@@ -198,13 +198,13 @@ export default function Board({
                 {isTarget && !piece && (
                   <div
                     className="absolute rounded-full dl-target-dot"
-                    style={{ width: "26%", height: "26%", background: "#caa356", zIndex: 1 }}
+                    style={{ width: "26%", height: "26%", background: "var(--cx-accent)", zIndex: 1 }}
                   />
                 )}
                 {isTarget && piece && (
                   <div
                     className="absolute inset-0"
-                    style={{ boxShadow: "inset 0 0 0 4px rgba(202,163,86,0.8)", zIndex: 2 }}
+                    style={{ boxShadow: "inset 0 0 0 4px color-mix(in srgb, var(--cx-accent) 80%, transparent)", zIndex: 2 }}
                   />
                 )}
               </Tag>
