@@ -7,7 +7,7 @@ import GameBoard from "../../../components/GameBoard";
 import SiteNav from "../../../components/SiteNav";
 import { recordMatchResult, getChampion, type Tournament, type BracketMatch } from "../../../lib/tournament";
 import { getTournament, saveTournament } from "../../../lib/tournamentStore";
-import { recordMatch, getPlayer } from "@../../../lib/players";
+import { recordMatch, getPlayer } from "../../../lib/players";
 
 export default function TournamentPage() {
   const params = useParams<{ id: string }>();

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import SiteNav from "../components/SiteNav";
@@ -23,9 +24,7 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ background: "#07070A", color: "#F5F3F7" }}>
       <style>{`
-        @keyframes cxFloat { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-14px) rotate(1deg); } }
         @keyframes cxPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-        .cx-king { animation: cxFloat 7s ease-in-out infinite; }
         .cx-live-dot { animation: cxPulse 1.4s ease-in-out infinite; }
         .cx-hero-bg {
           background:
@@ -87,32 +86,21 @@ export default function Home() {
           </div>
 
           <div className="relative flex items-center justify-center">
-            {/* Decorative king mark — swap for a rendered 3D piece via the image prompt in the handoff notes */}
-            <svg
-              className="cx-king"
-              width="220"
-              height="220"
-              viewBox="0 0 100 100"
-              style={{ filter: "drop-shadow(0 30px 60px color-mix(in srgb, var(--cx-accent) 45%, transparent))" }}
+            <div
+              className="relative"
+              style={{
+                filter: "drop-shadow(0 30px 60px color-mix(in srgb, var(--cx-accent) 45%, transparent))",
+              }}
             >
-              <defs>
-                <linearGradient id="kingGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="var(--cx-accent-light)" />
-                  <stop offset="100%" stopColor="var(--cx-accent-dark)" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M50 8 L54 16 L62 18 L55 24 L57 32 L50 28 L43 32 L45 24 L38 18 L46 16 Z"
-                fill="url(#kingGrad)"
+              <Image
+                src="/image.png"
+                alt="Chess king artwork"
+                width={720}
+                height={980}
+                priority
+                className="h-auto w-[280px] sm:w-[340px] lg:w-[420px] rounded-[20px] object-cover"
               />
-              <rect x="47" y="30" width="6" height="8" fill="url(#kingGrad)" />
-              <path
-                d="M30 42 C30 34 38 30 50 30 C62 30 70 34 70 42 L66 78 C66 82 62 86 57 86 L43 86 C38 86 34 82 34 78 Z"
-                fill="url(#kingGrad)"
-                opacity="0.92"
-              />
-              <rect x="24" y="86" width="52" height="7" rx="2" fill="url(#kingGrad)" />
-            </svg>
+            </div>
 
             <div
               className="absolute -bottom-4 right-0 sm:right-4 rounded-2xl p-4 w-56"
