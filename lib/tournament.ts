@@ -66,7 +66,7 @@ export function createTournament(name: string, seededPlayers: string[]): Tournam
   }
 
   return propagateWinners({
-    id: `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: crypto.randomUUID(),
     name,
     players: seededPlayers,
     rounds,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SiteNav from "../../components/SiteNav";
@@ -11,13 +11,19 @@ import type { Tournament } from "../../lib/tournament";
 
 export default function TournamentListPage() {
   const router = useRouter();
-  const [tournaments] = useState<Tournament[]>(() => listTournaments());
-  const [players] = useState<Player[]>(() => listPlayers());
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [name, setName] = useState("");
   const [namesInput, setNamesInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
-  function handleCreate(e: React.FormEvent) {
+  useEffect(() => {
+    listTournaments().then(setTournaments);
+    listPlayers().then(setPlayers);
+  }, []);
+
+  async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     const names = Array.from(
       new Set(
@@ -37,18 +43,24 @@ export default function TournamentListPage() {
       return;
     }
 
-    // Seed by current rating (unrated players default to 1200), highest first.
-    for (const n of names) ensurePlayer(n);
-    const ratings = listPlayers();
-    const seeded = [...names].sort((a, b) => {
-      const ra = ratings.find((p) => p.name === a)?.rating ?? 1200;
-      const rb = ratings.find((p) => p.name === b)?.rating ?? 1200;
-      return rb - ra;
-    });
+    setCreating(true);
+    try {
+      // Seed by current rating (unrated players default to 1200), highest first.
+      await Promise.all(names.map((n) => ensurePlayer(n)));
+      const ratings = await listPlayers();
+      const seeded = [...names].sort((a, b) => {
+        const ra = ratings.find((p) => p.name === a)?.rating ?? 1200;
+        const rb = ratings.find((p) => p.name === b)?.rating ?? 1200;
+        return rb - ra;
+      });
 
-    const t = createTournament(name.trim(), seeded);
-    saveTournament(t);
-    router.push(`/tournament/${t.id}`);
+      const t = createTournament(name.trim(), seeded);
+      await saveTournament(t);
+      router.push(`/tournament/${t.id}`);
+    } catch {
+      setError("Couldn't save the tournament — check your connection and try again.");
+      setCreating(false);
+    }
   }
 
   return (
@@ -106,9 +118,10 @@ export default function TournamentListPage() {
             {error && <p className="text-xs text-[#e0685f]">{error}</p>}
             <button
               type="submit"
-              className="px-4 py-2 rounded-full bg-gradient-to-b from-[var(--cx-accent-light)] to-[var(--cx-accent)] text-[#111116] text-sm font-semibold hover:brightness-110 transition"
+              disabled={creating}
+              className="px-4 py-2 rounded-full bg-gradient-to-b from-[var(--cx-accent-light)] to-[var(--cx-accent)] text-[#111116] text-sm font-semibold hover:brightness-110 transition disabled:opacity-60"
             >
-              Create bracket
+              {creating ? "Creating…" : "Create bracket"}
             </button>
           </form>
 

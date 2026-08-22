@@ -1,24 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import GameBoard from "../../../components/GameBoard";
 import SiteNav from "../../../components/SiteNav";
 import { recordMatchResult, getChampion, type Tournament, type BracketMatch } from "../../../lib/tournament";
 import { getTournament, saveTournament } from "../../../lib/tournamentStore";
-import { recordMatch, getPlayer } from "../../../lib/players";
+import { recordMatch, listPlayers } from "../../../lib/players";
 
 export default function TournamentPage() {
   const params = useParams<{ id: string }>();
-  const [tournament, setTournament] = useState<Tournament | null>(() => getTournament(params.id));
+  const [tournament, setTournament] = useState<Tournament | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [ratings, setRatings] = useState<Record<string, number>>({});
   const [activeMatch, setActiveMatch] = useState<BracketMatch | null>(null);
+
+  useEffect(() => {
+    getTournament(params.id).then((t) => {
+      setTournament(t);
+      setLoading(false);
+    });
+    listPlayers().then((players) => {
+      setRatings(Object.fromEntries(players.map((p) => [p.name, p.rating])));
+    });
+  }, [params.id]);
+
+  if (loading) return null;
 
   if (tournament === null) {
     return (
-      <div className="dl-page min-h-screen flex items-center justify-center" style={{ background: "#07070A", color: "#F5F3F7" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#07070A", color: "#F5F3F7" }}>
         <div className="text-center">
-          <p className="text-sm text-[#8f8a9c] mb-3">Tournament not found on this device.</p>
+          <p className="text-sm text-[#8f8a9c] mb-3">Tournament not found.</p>
           <Link href="/tournament" className="text-[var(--cx-accent)] text-sm hover:underline">
             ← Back to tournaments
           </Link>
@@ -29,12 +43,13 @@ export default function TournamentPage() {
 
   const champion = getChampion(tournament);
 
-  function handleResult(match: BracketMatch, winner: "white" | "black" | "draw") {
+  async function handleResult(match: BracketMatch, winner: "white" | "black" | "draw") {
     if (!tournament || !match.playerA || !match.playerB) return;
 
     // White = playerA, Black = playerB (see the "Play match" button below).
     if (winner === "draw") {
-      recordMatch(match.playerA, match.playerB, "draw");
+      const { a, b } = await recordMatch(match.playerA, match.playerB, "draw");
+      setRatings((prev) => ({ ...prev, [a.name]: a.rating, [b.name]: b.rating }));
       // Single-elimination has no draw-advance rule; require a decisive game to proceed.
       setActiveMatch(null);
       return;
@@ -42,10 +57,11 @@ export default function TournamentPage() {
 
     const winnerName = winner === "white" ? match.playerA : match.playerB;
     const eloResult = winner === "white" ? "a" : "b";
-    recordMatch(match.playerA, match.playerB, eloResult);
+    const { a, b } = await recordMatch(match.playerA, match.playerB, eloResult);
+    setRatings((prev) => ({ ...prev, [a.name]: a.rating, [b.name]: b.rating }));
 
     const updated = recordMatchResult(tournament, match.round, match.slot, winnerName);
-    saveTournament(updated);
+    await saveTournament(updated);
     setTournament(updated);
     setActiveMatch(null);
   }
@@ -91,7 +107,7 @@ export default function TournamentPage() {
                 {r === tournament.rounds.length - 1 ? "Final" : `Round ${r + 1}`}
               </div>
               {round.map((match) => (
-                <MatchCard key={match.id} match={match} onPlay={() => setActiveMatch(match)} />
+                <MatchCard key={match.id} match={match} ratings={ratings} onPlay={() => setActiveMatch(match)} />
               ))}
             </div>
           ))}
@@ -137,10 +153,18 @@ export default function TournamentPage() {
   );
 }
 
-function MatchCard({ match, onPlay }: { match: BracketMatch; onPlay: () => void }) {
+function MatchCard({
+  match,
+  ratings,
+  onPlay,
+}: {
+  match: BracketMatch;
+  ratings: Record<string, number>;
+  onPlay: () => void;
+}) {
   const ready = match.playerA && match.playerB && !match.winner;
-  const ratingA = match.playerA ? getPlayer(match.playerA).rating : null;
-  const ratingB = match.playerB ? getPlayer(match.playerB).rating : null;
+  const ratingA = match.playerA ? ratings[match.playerA] ?? null : null;
+  const ratingB = match.playerB ? ratings[match.playerB] ?? null : null;
 
   return (
     <div
