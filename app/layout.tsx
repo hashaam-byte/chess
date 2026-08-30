@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ThemeProvider } from "../components/ThemeProvider";
-import ThemeSwitcher from "../components/ThemeSwitcher";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 export const metadata: Metadata = {
   title: "CHESS//X",
-  description: "Play. Watch. Compete. A chess arena for tournaments, live matches, and rankings.",
+  description: "Play. Watch. Compete.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

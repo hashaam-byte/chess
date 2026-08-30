@@ -6,14 +6,13 @@
   --foreground: #F5F3F7;
 
   /* User-customizable accent — overridden at runtime by ThemeProvider and
-     persisted to localStorage. These defaults match the Violet preset so
-     the site looks right before JS hydrates. */
+     persisted to localStorage. These defaults keep the page looking right
+     before JS hydrates. */
   --cx-accent: #8B5CF6;
   --cx-accent-light: #A78BFA;
   --cx-accent-dark: #6D28D9;
 
   --cx-surface: #111116;
-  --cx-surface-2: #16161d;
   --cx-border: rgba(255, 255, 255, 0.08);
 }
 

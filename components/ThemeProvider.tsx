@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { ACCENT_PRESETS, DEFAULT_THEME, THEME_STORAGE_KEY, deriveTheme, type AccentTheme } from "../lib/theme";
+import { DEFAULT_THEME, THEME_STORAGE_KEY, deriveTheme, type AccentTheme } from "@/lib/theme";
 
 function applyTheme(theme: AccentTheme) {
   const root = document.documentElement;
@@ -68,5 +68,3 @@ export function useTheme() {
   if (!ctx) throw new Error("useTheme must be used within ThemeProvider");
   return ctx;
 }
-
-export { ACCENT_PRESETS };

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ProfileButton from "./ProfileButton";
 
 const LINKS = [
   { href: "/play", label: "Play" },
-  { href: "/tournament", label: "Tournaments" },
-  { href: "/rankings", label: "Rankings" },
+  { href: "/watch", label: "Watch" },
 ];
 
 export default function SiteNav() {
@@ -32,23 +32,27 @@ export default function SiteNav() {
           CHESS<span style={{ color: "var(--cx-accent)" }}>{"//"}</span>X
         </span>
       </Link>
-      <div className="flex items-center gap-1">
-        {LINKS.map((link) => {
-          const active = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[13px] px-3 py-1.5 rounded-full transition-colors"
-              style={{
-                color: active ? "#F5F3F7" : "#8f8a9c",
-                background: active ? "rgba(255,255,255,0.06)" : "transparent",
-              }}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
+          {LINKS.map((link) => {
+            const active = pathname === link.href || (link.href !== "/" && pathname?.startsWith(link.href));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-[13px] px-3 py-1.5 rounded-full transition-colors"
+                style={{
+                  color: active ? "#F5F3F7" : "#8f8a9c",
+                  background: active ? "rgba(255,255,255,0.06)" : "transparent",
+                }}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+        <ProfileButton />
       </div>
     </nav>
   );
