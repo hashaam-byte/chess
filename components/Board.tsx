@@ -101,6 +101,28 @@ export default function Board({
           pointerEvents: "none",
         }}
       />
+      {/* HUD-style corner brackets — a small identity touch so the board doesn't read as a generic library skin */}
+      {[
+        { top: 0, left: 0, borderWidth: "2px 0 0 2px" },
+        { top: 0, right: 0, borderWidth: "2px 2px 0 0" },
+        { bottom: 0, left: 0, borderWidth: "0 0 2px 2px" },
+        { bottom: 0, right: 0, borderWidth: "0 2px 2px 0" },
+      ].map((pos, i) => (
+        <div
+          key={i}
+          style={{
+            position: "absolute",
+            ...pos,
+            width: 16,
+            height: 16,
+            borderStyle: "solid",
+            borderColor: "var(--cx-accent)",
+            opacity: 0.7,
+            filter: "drop-shadow(0 0 4px color-mix(in srgb, var(--cx-accent) 60%, transparent))",
+            pointerEvents: "none",
+          }}
+        />
+      ))}
       <div
         className="relative grid grid-cols-8 grid-rows-8 overflow-hidden"
         style={{ width: "100%", height: "100%", borderRadius: 2 }}
