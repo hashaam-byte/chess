@@ -1,12 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import SiteNav from "@/components/SiteNav";
 import GameBoard from "@/components/GameBoard";
 import { getProfile } from "@/lib/profile";
+import { createLiveGame, updateLiveGame, finishLiveGame } from "@/lib/games";
+
+const START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 export default function PlayPage() {
   const [whiteLabel] = useState(() => getProfile()?.name || "Player 1");
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(true);
+  const finishedRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    createLiveGame(
+      { name: whiteLabel, avatarId: getProfile()?.avatarId ?? "violet-king" },
+      { name: "Player 2", avatarId: "slate-pawn" },
+      START_FEN
+    ).then((id) => {
+      if (cancelled) return;
+      setGameId(id);
+      setPublishing(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally runs once — this page represents exactly one game.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleStateChange(fen: string, pgn: string) {
+    if (gameId) updateLiveGame(gameId, fen, pgn);
+  }
+
+  function handleResult(winner: "white" | "black" | "draw") {
+    if (gameId && !finishedRef.current) {
+      finishedRef.current = true;
+      finishLiveGame(gameId, winner);
+    }
+  }
 
   return (
     <div className="dl-page min-h-screen flex flex-col items-center">
@@ -37,6 +72,7 @@ export default function PlayPage() {
             <span className="dl-badge">Pass-and-play</span>
             <span className="dl-badge">Full rules via chess.js</span>
             <span className="dl-badge">Live Stockfish eval</span>
+            {gameId && <span className="dl-badge" style={{ color: "#F43F5E" }}>● Visible on Watch</span>}
           </div>
         </div>
 
@@ -49,14 +85,24 @@ export default function PlayPage() {
             boxShadow: "0 30px 60px -30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
-          <GameBoard whiteLabel={whiteLabel} blackLabel="Player 2" />
+          <GameBoard
+            whiteLabel={whiteLabel}
+            blackLabel="Player 2"
+            onStateChange={handleStateChange}
+            onResult={handleResult}
+          />
         </div>
 
-        <p className="text-xs mt-6 text-center max-w-sm" style={{ color: "#5c5968" }}>
-          This game is only visible in this browser tab for now — it won&apos;t show up on{" "}
-          <span style={{ color: "#8f8a9c" }}>Watch</span> for other people yet. That needs a shared backend, which
-          is next.
-        </p>
+        {!publishing && (
+          <p className="text-xs mt-6 text-center max-w-sm" style={{ color: "#5c5968" }}>
+            {gameId ? (
+              <>This game is live on <span style={{ color: "#8f8a9c" }}>Watch</span> — anyone can spectate right now.</>
+            ) : (
+              <>No Supabase project connected yet, so this game is only visible in this browser tab — it won&apos;t
+              show up on <span style={{ color: "#8f8a9c" }}>Watch</span> for anyone else. See .env.local.example.</>
+            )}
+          </p>
+        )}
       </div>
     </div>
   );

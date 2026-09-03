@@ -12,10 +12,23 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listLiveGames().then((g) => {
-      setGames(g);
-      setLoading(false);
-    });
+    let cancelled = false;
+
+    function poll() {
+      listLiveGames().then((g) => {
+        if (!cancelled) {
+          setGames(g);
+          setLoading(false);
+        }
+      });
+    }
+
+    poll();
+    const interval = setInterval(poll, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   return (

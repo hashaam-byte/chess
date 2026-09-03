@@ -11,10 +11,23 @@ export default function WatchPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listLiveGames().then((g) => {
-      setGames(g);
-      setLoading(false);
-    });
+    let cancelled = false;
+
+    function poll() {
+      listLiveGames().then((g) => {
+        if (!cancelled) {
+          setGames(g);
+          setLoading(false);
+        }
+      });
+    }
+
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
 
   return (

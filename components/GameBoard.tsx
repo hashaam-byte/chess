@@ -6,8 +6,8 @@ import Image from "next/image";
 import Board from "./Board";
 import EvalBar from "./EvalBar";
 import GameReview, { accuracyFromAvgLoss, type PlyAnalysis } from "./GameReview";
-import { getEngine, type EngineEval } from "../lib/engine";
-import { classifyMove, QUALITY_LABEL, QUALITY_COLOR } from "../lib/moveQuality";
+import { getEngine, type EngineEval } from "@/lib/engine";
+import { classifyMove, QUALITY_LABEL, QUALITY_COLOR } from "@/lib/moveQuality";
 
 type PieceType = "king" | "queen" | "rook" | "bishop" | "knight" | "pawn";
 const TYPE_MAP: Record<string, PieceType> = {
@@ -65,10 +65,15 @@ export default function GameBoard({
   whiteLabel = "White",
   blackLabel = "Black",
   onResult,
+  onStateChange,
 }: {
   whiteLabel?: string;
   blackLabel?: string;
   onResult?: (winner: "white" | "black" | "draw") => void;
+  /** Fires after every move (and undo/reset) with the current position — for
+   *  publishing to a spectator feed. Entirely optional; the board works the
+   *  same locally with or without it. */
+  onStateChange?: (fen: string, pgn: string) => void;
 }) {
   // The Chess instance is mutable and mutated in place inside event handlers;
   // `version` is bumped alongside it purely to force a re-render. It's kept in
@@ -170,6 +175,7 @@ export default function GameBoard({
         setSelected(null);
         touch();
         triggerLiveEval(chess.fen());
+        onStateChange?.(chess.fen(), chess.pgn());
         return;
       }
       const piece = chess.get(sq);
@@ -190,6 +196,7 @@ export default function GameBoard({
     setPromo(null);
     touch();
     triggerLiveEval(chess.fen());
+    onStateChange?.(chess.fen(), chess.pgn());
   }
 
   function undoMove() {
@@ -201,6 +208,7 @@ export default function GameBoard({
     setSelected(null);
     touch();
     triggerLiveEval(chess.fen());
+    onStateChange?.(chess.fen(), chess.pgn());
   }
 
   function resign(color: "white" | "black") {

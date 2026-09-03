@@ -1,7 +1,7 @@
 "use client";
 
-import type { MoveQuality } from "../lib/moveQuality";
-import { QUALITY_COLOR } from "../lib/moveQuality";
+import type { MoveQuality } from "@/lib/moveQuality";
+import { QUALITY_COLOR } from "@/lib/moveQuality";
 
 export type PlyAnalysis = { quality: MoveQuality; cpLoss: number };
 
