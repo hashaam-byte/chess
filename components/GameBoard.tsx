@@ -66,6 +66,9 @@ export default function GameBoard({
   blackLabel = "Black",
   onResult,
   onStateChange,
+  playAs,
+  remoteFen,
+  remoteVersion,
 }: {
   whiteLabel?: string;
   blackLabel?: string;
@@ -74,6 +77,13 @@ export default function GameBoard({
    *  publishing to a spectator feed. Entirely optional; the board works the
    *  same locally with or without it. */
   onStateChange?: (fen: string, pgn: string) => void;
+  /** Restricts which side's pieces this device can move. Omit for local
+   *  pass-and-play (either side movable, matching the original behavior). */
+  playAs?: "white" | "black";
+  /** When remoteVersion increases, the board loads remoteFen — this is how
+   *  an opponent's move (arriving over the network) gets applied here. */
+  remoteFen?: string;
+  remoteVersion?: number;
 }) {
   // The Chess instance is mutable and mutated in place inside event handlers;
   // `version` is bumped alongside it purely to force a re-render. It's kept in
@@ -92,6 +102,28 @@ export default function GameBoard({
   const [evalPoints, setEvalPoints] = useState<number[] | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [reviewProgress, setReviewProgress] = useState(0);
+
+  // Applies an opponent's move arriving from the network. Guarded by a ref
+  // (not state) so re-renders from other causes don't re-trigger it — only
+  // an actual increase in remoteVersion should load a new position.
+  const lastAppliedRemoteVersion = useRef(0);
+  useEffect(() => {
+    if (remoteVersion === undefined || remoteFen === undefined) return;
+    if (remoteVersion <= lastAppliedRemoteVersion.current) return;
+    lastAppliedRemoteVersion.current = remoteVersion;
+    if (remoteFen === chess.fen()) return; // already at this position (e.g. echo of our own move)
+    // Deferred to a microtask so applying the update (and its setState
+    // calls) doesn't happen synchronously inside the effect body.
+    queueMicrotask(() => {
+      chess.load(remoteFen);
+      setSelected(null);
+      setPromo(null);
+      setLastMove(null); // the exact from/to isn't known from a FEN snapshot alone
+      touch();
+      triggerLiveEval(remoteFen);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteVersion, remoteFen]);
 
   // Live Stockfish eval bar. Runs in the background after every move; the
   // request id guards against a slower earlier evaluation overwriting a
@@ -160,6 +192,7 @@ export default function GameBoard({
 
   function handleSquareClick(sqStr: string) {
     if (gameOver || promo) return;
+    if (playAs && playAs !== turn) return; // not this device's turn to move
     const sq = sqStr as Square;
 
     if (selected) {
