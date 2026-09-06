@@ -6,7 +6,7 @@ import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
 import GameBoard from "@/components/GameBoard";
 import AvatarIcon from "@/components/AvatarIcon";
-import { getProfile } from "@/lib/profile";
+import { getProfile, recordGameResult } from "@/lib/profile";
 import { getMySeat, claimSeat } from "@/lib/localIdentity";
 import {
   getLiveGame,
@@ -50,14 +50,18 @@ export default function PlayRoomPage() {
       setRemoteFen(updated.fen);
       setRemoteVersion((v) => v + 1);
       if (updated.status === "finished" && !finishedRef.current) {
+        finishedRef.current = true;
         setEndedRemotely(
           updated.result === "draw"
             ? "Game ended in a draw."
             : `${updated.result === "white" ? updated.whiteName : updated.blackName} won — your opponent ended the game.`
         );
+        if (mySeat && updated.result) {
+          recordGameResult(updated.result === "draw" ? "draw" : updated.result === mySeat ? "win" : "loss");
+        }
       }
     });
-  }, [params.id]);
+  }, [params.id, mySeat]);
 
   useEffect(() => {
     if (!mySeat || game?.status === "finished") return;
@@ -97,6 +101,9 @@ export default function PlayRoomPage() {
     if (!finishedRef.current) {
       finishedRef.current = true;
       finishLiveGame(params.id, winner);
+      if (mySeat) {
+        recordGameResult(winner === "draw" ? "draw" : winner === mySeat ? "win" : "loss");
+      }
     }
   }
 
@@ -188,6 +195,7 @@ export default function PlayRoomPage() {
           remoteVersion={remoteVersion}
           onStateChange={handleStateChange}
           onResult={handleResult}
+          frozen={!!endedRemotely}
         />
       </RoomShell>
     );

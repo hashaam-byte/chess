@@ -11,7 +11,8 @@ export default function ProfileButton() {
   const [draft, setDraft] = useState<Profile>(() => getProfile() ?? blankProfile());
 
   function openEditor() {
-    setDraft(profile ?? blankProfile());
+    setProfile(getProfile()); // pick up any stats recorded since this button last rendered
+    setDraft(getProfile() ?? blankProfile());
     setOpen(true);
   }
 
@@ -52,8 +53,22 @@ export default function ProfileButton() {
               Your profile
             </h2>
             <p className="text-xs mb-5" style={{ color: "#8f8a9c" }}>
-              Stored on this device for now — accounts are coming later.
+              Stored on this device until you change or clear it — no account needed.
             </p>
+
+            {profile && profile.stats.gamesPlayed > 0 && (
+              <div className="grid grid-cols-4 gap-2 mb-5">
+                <StatCell label="Played" value={profile.stats.gamesPlayed} />
+                <StatCell label="W / L / D" value={`${profile.stats.wins}/${profile.stats.losses}/${profile.stats.draws}`} small />
+                <StatCell
+                  label="Streak"
+                  value={profile.stats.currentStreak === 0 ? "—" : `${profile.stats.currentStreak > 0 ? "+" : ""}${profile.stats.currentStreak}`}
+                  accent={profile.stats.currentStreak > 0}
+                  warn={profile.stats.currentStreak < 0}
+                />
+                <StatCell label="Best streak" value={profile.stats.bestWinStreak} />
+              </div>
+            )}
 
             <label className="block text-xs font-medium mb-1.5" style={{ color: "#c8c6d0" }}>
               Display name
@@ -108,5 +123,33 @@ export default function ProfileButton() {
         </div>
       )}
     </>
+  );
+}
+
+function StatCell({
+  label,
+  value,
+  small,
+  accent,
+  warn,
+}: {
+  label: string;
+  value: string | number;
+  small?: boolean;
+  accent?: boolean;
+  warn?: boolean;
+}) {
+  return (
+    <div className="rounded-lg py-2 px-1 text-center" style={{ background: "#07070A", border: "1px solid #1a1a1f" }}>
+      <div
+        className={small ? "text-xs font-semibold" : "text-sm font-semibold"}
+        style={{ color: accent ? "var(--cx-accent-light)" : warn ? "#F43F5E" : "#F5F3F7" }}
+      >
+        {value}
+      </div>
+      <div className="text-[9px] mt-0.5" style={{ color: "#5c5968" }}>
+        {label}
+      </div>
+    </div>
   );
 }

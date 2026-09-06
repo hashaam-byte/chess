@@ -69,6 +69,7 @@ export default function GameBoard({
   playAs,
   remoteFen,
   remoteVersion,
+  frozen,
 }: {
   whiteLabel?: string;
   blackLabel?: string;
@@ -84,6 +85,9 @@ export default function GameBoard({
    *  an opponent's move (arriving over the network) gets applied here. */
   remoteFen?: string;
   remoteVersion?: number;
+  /** Locks the board — for when the game ended via a remote event (e.g. the
+   *  opponent resigned) that this device didn't cause. */
+  frozen?: boolean;
 }) {
   // The Chess instance is mutable and mutated in place inside event handlers;
   // `version` is bumped alongside it purely to force a re-render. It's kept in
@@ -191,7 +195,7 @@ export default function GameBoard({
   }
 
   function handleSquareClick(sqStr: string) {
-    if (gameOver || promo) return;
+    if (gameOver || promo || frozen) return;
     if (playAs && playAs !== turn) return; // not this device's turn to move
     const sq = sqStr as Square;
 
@@ -464,27 +468,32 @@ export default function GameBoard({
           </>
         ) : (
           <>
+            {!playAs && (
+              <button
+                onClick={undoMove}
+                disabled={history.length === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition disabled:opacity-30 disabled:hover:text-[#8f8a9c] disabled:hover:border-[#23232c]"
+              >
+                <UndoIcon /> Undo move
+              </button>
+            )}
             <button
-              onClick={undoMove}
-              disabled={history.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition disabled:opacity-30 disabled:hover:text-[#8f8a9c] disabled:hover:border-[#23232c]"
+              onClick={() => resign(playAs ?? turn)}
+              disabled={frozen}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#d6746c] border border-[#4a2e2a] hover:text-[#f0a49c] hover:border-[#6b3c35] transition disabled:opacity-30"
             >
-              <UndoIcon /> Undo move
-            </button>
-            <button
-              onClick={() => resign(turn)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#d6746c] border border-[#4a2e2a] hover:text-[#f0a49c] hover:border-[#6b3c35] transition"
-            >
-              <FlagIcon /> {turn === "white" ? whiteLabel : blackLabel} resigns
+              <FlagIcon /> {playAs ? "Resign" : `${turn === "white" ? whiteLabel : blackLabel} resigns`}
             </button>
           </>
         )}
-        <button
-          onClick={resetGame}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition"
-        >
-          <ResetIcon /> Reset board
-        </button>
+        {!playAs && (
+          <button
+            onClick={resetGame}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition"
+          >
+            <ResetIcon /> Reset board
+          </button>
+        )}
       </div>
 
       <style>{`
