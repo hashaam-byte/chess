@@ -7,6 +7,7 @@ import ProfileButton from "./ProfileButton";
 const LINKS = [
   { href: "/play", label: "Play" },
   { href: "/watch", label: "Watch" },
+  { href: "/tournament", label: "Tournaments" },
 ];
 
 /**
@@ -19,6 +20,9 @@ const LINKS = [
 function getBackHref(pathname: string): string | null {
   if (pathname === "/") return null;
   if (pathname.startsWith("/watch/")) return "/watch";
+  const matchMatch = pathname.match(/^\/tournament\/([^/]+)\/match\/[^/]+$/);
+  if (matchMatch) return `/tournament/${matchMatch[1]}`;
+  if (pathname.startsWith("/tournament/")) return "/tournament";
   return "/";
 }
 
