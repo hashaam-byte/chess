@@ -4,11 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
 import LiveGameCard from "@/components/LiveGameCard";
-import { listLiveGames, type LiveGame } from "@/lib/games";
+import { listLiveGames, cleanupStaleGames, type LiveGame } from "@/lib/games";
 
 export default function WatchPage() {
   const [games, setGames] = useState<LiveGame[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Housekeeping — once per page visit is plenty, no need to run this on
+  // every 3s poll below.
+  useEffect(() => {
+    cleanupStaleGames();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;

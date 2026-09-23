@@ -49,7 +49,15 @@ export default function TournamentMatchPage() {
   useEffect(() => {
     if (!match || !mySeat || !match.playerA || !match.playerB) return;
     if (match.gameId) {
-      getLiveGame(match.gameId).then(setGame);
+      getLiveGame(match.gameId).then((g) => {
+        setGame(g);
+        // Same reload-restore fix as /play/[id] — seed the board with the
+        // current position immediately rather than waiting for a live update.
+        if (g) {
+          setRemoteFen(g.fen);
+          setRemoteVersion(1);
+        }
+      });
       return;
     }
     if (mySeat !== "white") return; // black waits for the subscription below to pick up gameId

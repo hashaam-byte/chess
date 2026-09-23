@@ -6,6 +6,7 @@ import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
 import GameBoard from "@/components/GameBoard";
 import AvatarIcon from "@/components/AvatarIcon";
+import ChessQRCode from "@/components/ChessQRCode";
 import { getProfile, recordGameResult } from "@/lib/profile";
 import { getMySeat, claimSeat } from "@/lib/localIdentity";
 import {
@@ -38,6 +39,14 @@ export default function PlayRoomPage() {
       if (cancelled) return;
       setGame(g);
       setMySeat(getMySeat(params.id));
+      // Seed the board with wherever this game currently is — without this,
+      // reloading mid-game shows the starting position until the *next*
+      // move happens, since the subscription below only reports changes
+      // that occur after it starts listening, not the current state.
+      if (g) {
+        setRemoteFen(g.fen);
+        setRemoteVersion(1);
+      }
     });
     return () => {
       cancelled = true;
@@ -139,8 +148,13 @@ export default function PlayRoomPage() {
           </div>
           <h1 className="font-serif font-semibold text-lg mb-2">Waiting for an opponent…</h1>
           <p className="text-sm mb-6" style={{ color: "#8f8a9c" }}>
-            Send this link to whoever you want to play. The game starts the moment they open it.
+            Send this link to whoever you want to play, or have them scan the code. The game starts the moment they open it.
           </p>
+          {typeof window !== "undefined" && (
+            <div className="flex justify-center mb-6">
+              <ChessQRCode url={window.location.href} size={180} />
+            </div>
+          )}
           <button
             onClick={copyLink}
             className="w-full px-4 py-2.5 rounded-full text-sm font-semibold transition"

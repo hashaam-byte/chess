@@ -138,6 +138,31 @@ export async function pingLiveGame(id: string): Promise<void> {
 }
 
 /**
+ * Deletes old rows to keep the table small — not needed for correctness
+ * (the staleness filter in listLiveGames already hides dead games from
+ * Watch), just housekeeping. Two separate rules:
+ *   - finished games older than a day: the result's been seen, no reason
+ *     to keep the row around forever.
+ *   - waiting/active games with no heartbeat in 20+ minutes: genuinely
+ *     abandoned (tab closed, browser crashed, etc.), not just "someone's
+ *     thinking hard about a move" — a real move or a heartbeat ping both
+ *     touch updated_at, so a legitimately ongoing game never hits this.
+ * Safe to call opportunistically (e.g. whenever Watch loads) — cheap when
+ * there's nothing to clean up, and harmless if called concurrently from
+ * two tabs at once.
+ */
+export async function cleanupStaleGames(): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const finishedCutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const abandonedCutoff = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+
+  await supabase.from("live_games").delete().eq("status", "finished").lt("updated_at", finishedCutoff);
+  await supabase.from("live_games").delete().in("status", ["waiting", "active"]).lt("updated_at", abandonedCutoff);
+}
+
+/**
  * Subscribes to live changes on a single game. Calls `onChange` with the
  * updated row whenever it changes. Returns an unsubscribe function.
  * No-ops (returns a no-op cleanup) if Supabase isn't configured.
