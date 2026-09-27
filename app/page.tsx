@@ -165,7 +165,14 @@ export default function Home() {
       </section>
 
       <footer className="px-6 sm:px-10 py-10 text-center text-[11px]" style={{ color: "#5c5968", borderTop: "1px solid #16161d" }}>
-        CHESS<span style={{ color: "var(--cx-accent)" }}>{"//"}</span>X — click the color dot in the corner to make it yours.
+        <div className="mb-3">
+          CHESS<span style={{ color: "var(--cx-accent)" }}>{"//"}</span>X — click the color dot in the corner to make it yours.
+        </div>
+        <div className="flex items-center justify-center gap-4">
+          <a href="/privacy" className="underline">Privacy</a>
+          <a href="/terms" className="underline">Terms</a>
+          <a href="/credits" className="underline">Credits</a>
+        </div>
       </footer>
     </div>
   );

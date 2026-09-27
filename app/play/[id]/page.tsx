@@ -32,6 +32,13 @@ export default function PlayRoomPage() {
   const [endedRemotely, setEndedRemotely] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const finishedRef = useRef(false);
+  // Guards against a real race: the moment `joinLiveGame` writes to Supabase,
+  // this browser's own `subscribeToGame` can receive that change back over
+  // the realtime websocket before the rest of `handleJoin` has finished
+  // setting `mySeat` locally. Without this flag, that brief window looks
+  // identical to "a stranger opened an active game with no seat" and the
+  // redirect effect below bounces the *joining player* to /watch.
+  const joiningRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,25 +88,30 @@ export default function PlayRoomPage() {
   // Redirect third-party visitors on an active/finished game to the proper
   // read-only spectator page rather than duplicating that view here.
   useEffect(() => {
-    if (game && game.status !== "waiting" && !mySeat) {
+    if (game && game.status !== "waiting" && !mySeat && !joiningRef.current) {
       router.replace(`/watch/${params.id}`);
     }
   }, [game, mySeat, params.id, router]);
 
   async function handleJoin() {
-    const profile = getProfile();
-    const ok = await joinLiveGame(params.id, {
-      name: profile?.name || "Player 2",
-      avatarId: profile?.avatarId ?? "slate-pawn",
-    });
-    const fresh = await getLiveGame(params.id);
-    setGame(fresh);
-    if (ok) {
-      claimSeat(params.id, "black");
-      setMySeat("black");
+    joiningRef.current = true;
+    try {
+      const profile = getProfile();
+      const ok = await joinLiveGame(params.id, {
+        name: profile?.name || "Player 2",
+        avatarId: profile?.avatarId ?? "slate-pawn",
+      });
+      const fresh = await getLiveGame(params.id);
+      setGame(fresh);
+      if (ok) {
+        claimSeat(params.id, "black");
+        setMySeat("black");
+      }
+      // If !ok, someone else won the seat first — the effect above will
+      // redirect us to spectate once `game` reflects the new active state.
+    } finally {
+      joiningRef.current = false;
     }
-    // If !ok, someone else won the seat first — the effect above will
-    // redirect us to spectate once `game` reflects the new active state.
   }
 
   function handleStateChange(fen: string, pgn: string) {

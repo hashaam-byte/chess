@@ -8,12 +8,21 @@ import Board from "@/components/Board";
 import AvatarIcon from "@/components/AvatarIcon";
 import { getLiveGame, moveNumberFromFen, type LiveGame } from "@/lib/games";
 import { fenToPosition, checkSquareFromFen } from "@/lib/fenToPosition";
+import { getMySeat } from "@/lib/localIdentity";
 
 const POLL_MS = 2000;
 
 export default function SpectateGamePage() {
   const params = useParams<{ id: string }>();
   const [game, setGame] = useState<LiveGame | null | undefined>(undefined);
+  // Checked client-side only (localStorage), after mount, so the server-
+  // rendered HTML and the first client render match — this can't be read
+  // during render without causing a hydration mismatch.
+  const [mySeat, setMySeat] = useState<"white" | "black" | null>(null);
+
+  useEffect(() => {
+    setMySeat(getMySeat(params.id));
+  }, [params.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +74,23 @@ export default function SpectateGamePage() {
       <SiteNav />
 
       <div className="flex flex-col items-center p-6 sm:p-10">
+        {mySeat && game.status !== "finished" && (
+          <div
+            className="w-full flex items-center justify-between gap-3 rounded-xl px-4 py-3 mb-5"
+            style={{ maxWidth: 560, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.3)" }}
+          >
+            <span className="text-sm" style={{ color: "#F5F3F7" }}>
+              You&apos;re playing this game — it&apos;s still going.
+            </span>
+            <Link
+              href={`/play/${params.id}`}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap"
+              style={{ background: "linear-gradient(135deg, var(--cx-accent-light), var(--cx-accent))", color: "#0b0b0f" }}
+            >
+              Return to your game →
+            </Link>
+          </div>
+        )}
         <div className="w-full flex items-center justify-between mb-6" style={{ maxWidth: 560 }}>
           <div className="flex items-center gap-2">
             <AvatarIcon avatarId={game.whiteAvatarId} size={28} />

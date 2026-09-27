@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import CookieNotice from "@/components/CookieNotice";
 
 export const metadata: Metadata = {
   title: "CHESS//X",
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           {children}
           <ThemeSwitcher />
+          <CookieNotice />
         </ThemeProvider>
       </body>
     </html>
