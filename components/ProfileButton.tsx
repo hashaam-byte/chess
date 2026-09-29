@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AvatarIcon from "./AvatarIcon";
 import { AVATAR_PRESETS } from "@/lib/avatars";
 import { getProfile, saveProfile, blankProfile, type Profile } from "@/lib/profile";
+import { claimPlayerName } from "@/lib/players";
 
 export default function ProfileButton() {
   // Seeded as null on both server and client's first render — reading
@@ -16,6 +17,8 @@ export default function ProfileButton() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Profile>(blankProfile());
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setProfile(getProfile());
@@ -24,13 +27,27 @@ export default function ProfileButton() {
   function openEditor() {
     setProfile(getProfile()); // pick up any stats recorded since this button last rendered
     setDraft(getProfile() ?? blankProfile());
+    setNameError(null);
     setOpen(true);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const trimmed = draft.name.trim();
-    if (!trimmed) return;
-    const next = { ...draft, name: trimmed };
+    if (!trimmed || saving) return;
+    setSaving(true);
+    setNameError(null);
+    const claim = await claimPlayerName(trimmed, draft.avatarId);
+    setSaving(false);
+    if (!claim.ok) {
+      setNameError(
+        claim.reason === "taken"
+          ? "That name is already taken — pick another."
+          : "Couldn't check that name right now. Try again."
+      );
+      return;
+    }
+    // Use the stored spelling so "alex" and "Alex" can't drift apart.
+    const next = { ...draft, name: claim.player.name };
     saveProfile(next);
     setProfile(next);
     setOpen(false);
@@ -87,12 +104,13 @@ export default function ProfileButton() {
             <input
               autoFocus
               value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              onChange={(e) => { setDraft({ ...draft, name: e.target.value }); setNameError(null); }}
               placeholder="e.g. Alex"
               maxLength={24}
-              className="w-full mb-5 px-3 py-2 rounded-lg text-sm"
-              style={{ background: "#07070A", border: "1px solid #23232c", color: "#F5F3F7" }}
+              className="w-full mb-1 px-3 py-2 rounded-lg text-sm"
+              style={{ background: "#07070A", border: `1px solid ${nameError ? "#F43F5E" : "#23232c"}`, color: "#F5F3F7" }}
             />
+            <p className="text-[11px] mb-5 min-h-[16px]" style={{ color: "#F43F5E" }}>{nameError}</p>
 
             <label className="block text-xs font-medium mb-2" style={{ color: "#c8c6d0" }}>
               Avatar
@@ -123,11 +141,11 @@ export default function ProfileButton() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!draft.name.trim()}
+                disabled={!draft.name.trim() || saving}
                 className="px-4 py-2 rounded-full text-sm font-semibold transition disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, var(--cx-accent-light), var(--cx-accent))", color: "#0b0b0f" }}
               >
-                Save
+                {saving ? "Checking…" : "Save"}
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import SiteNav from "@/components/SiteNav";
 import GameBoard from "@/components/GameBoard";
 import { recordGameResult } from "@/lib/profile";
+import { recordMatch } from "@/lib/players";
 import { getMySeat, claimSeat } from "@/lib/localIdentity";
 import { getLiveGame, createLiveGame, joinLiveGame, updateLiveGame, finishLiveGame, pingLiveGame, subscribeToGame, type LiveGame } from "@/lib/games";
 import { getTournament, saveRounds, subscribeToTournament, type Tournament } from "@/lib/tournamentStore";
@@ -145,6 +146,10 @@ export default function TournamentMatchPage() {
           const freshMatch = findMatch(fresh.rounds, match.id);
           if (freshMatch && !freshMatch.winner) {
             await saveRounds(params.id, recordMatchWinner(fresh.rounds, match.id, winnerName));
+            // Same guard as the bracket save, so each match is rated exactly once.
+            if (match.playerA && match.playerB) {
+              await recordMatch(match.playerA, match.playerB, winner === "white" ? "a" : "b");
+            }
           }
         }
       }

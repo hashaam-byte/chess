@@ -5,11 +5,18 @@ import Link from "next/link";
 import Image from "next/image";
 import SiteNav from "@/components/SiteNav";
 import LiveGameCard from "@/components/LiveGameCard";
+import PlayerAvatar from "@/components/PlayerAvatar";
 import { listLiveGames, type LiveGame } from "@/lib/games";
+import { listPlayers, type Player } from "@/lib/players";
 
 export default function Home() {
   const [games, setGames] = useState<LiveGame[]>([]);
   const [loading, setLoading] = useState(true);
+  const [top, setTop] = useState<Player[]>([]);
+
+  useEffect(() => {
+    listPlayers().then((p) => setTop(p.filter((x) => x.games > 0).slice(0, 5)));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -121,6 +128,24 @@ export default function Home() {
         </section>
       </div>
 
+      {/* Ways to play */}
+      <section className="px-6 sm:px-10 pt-4 pb-6 max-w-7xl mx-auto">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { href: "/play", title: "Play a friend", body: "Start a game and send the link. No account, no waiting room.", tag: "1 v 1" },
+            { href: "/play/bot", title: "Play a bot", body: "Pick an opponent with a face and a personality, then see how you did.", tag: "SOLO" },
+            { href: "/tournament", title: "Tournaments", body: "Join a bracket, climb the rankings, play for the prize.", tag: "COMPETE" },
+          ].map((m) => (
+            <Link key={m.href} href={m.href} className="cx-card rounded-2xl p-6 block" style={{ background: "#111116", border: "1px solid #23232c", color: "#F5F3F7" }}>
+              <span className="text-[10px] font-semibold tracking-[0.18em]" style={{ color: "var(--cx-accent-light)" }}>{m.tag}</span>
+              <h3 className="font-serif font-semibold text-xl mt-2 mb-1.5">{m.title}</h3>
+              <p className="text-sm" style={{ color: "#8f8a9c" }}>{m.body}</p>
+              <span className="inline-block mt-4 text-xs font-medium" style={{ color: "var(--cx-accent-light)" }}>Go →</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Live right now */}
       <section className="px-6 sm:px-10 py-14 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
@@ -156,12 +181,29 @@ export default function Home() {
       <section className="px-6 sm:px-10 py-14 max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="font-serif font-semibold text-xl">Leaderboard</h2>
+          <Link href="/rankings" className="text-xs font-medium" style={{ color: "var(--cx-accent-light)" }}>
+            Full rankings →
+          </Link>
         </div>
-        <div className="cx-card rounded-2xl p-8 text-center" style={{ background: "#111116", border: "1px solid #23232c" }}>
-          <p className="text-sm" style={{ color: "#8f8a9c" }}>
-            Ratings will appear here once games are being played.
-          </p>
-        </div>
+        {top.length === 0 ? (
+          <div className="cx-card rounded-2xl p-8 text-center" style={{ background: "#111116", border: "1px solid #23232c" }}>
+            <p className="text-sm" style={{ color: "#8f8a9c" }}>
+              Ratings will appear here once tournament games are played.
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-2xl overflow-hidden" style={{ background: "#111116", border: "1px solid #23232c" }}>
+            {top.map((p, i) => (
+              <div key={p.name} className="flex items-center gap-4 px-5 py-3.5" style={{ borderBottom: i === top.length - 1 ? "none" : "1px solid #1a1a1f" }}>
+                <span className="w-5 text-sm font-semibold tabular-nums" style={{ color: i < 3 ? "var(--cx-accent-light)" : "#5c5968" }}>{i + 1}</span>
+                <PlayerAvatar name={p.name} avatarUrl={p.avatarUrl} avatarId={p.avatarId} size={32} />
+                <span className="flex-1 min-w-0 text-sm font-medium truncate">{p.name}</span>
+                <span className="text-[11px]" style={{ color: "#5c5968" }}>{p.wins}W {p.losses}L {p.draws}D</span>
+                <span className="w-12 text-right text-base font-semibold tabular-nums" style={{ color: "var(--cx-accent-light)" }}>{p.rating}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <footer className="px-6 sm:px-10 py-10 text-center text-[11px]" style={{ color: "#5c5968", borderTop: "1px solid #16161d" }}>

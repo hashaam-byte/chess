@@ -1,5 +1,6 @@
 import { DEFAULT_RATING, updateElo, type MatchScore } from "./elo";
 import { getSupabase } from "./supabase";
+import { getDeviceKey } from "./deviceKey";
 
 export type Player = {
   name: string;
@@ -9,6 +10,8 @@ export type Player = {
   losses: number;
   draws: number;
   avatarUrl?: string | null;
+  /** Preset avatar id chosen in the profile (used when there is no uploaded photo). */
+  avatarId?: string | null;
 };
 
 function blankPlayer(name: string): Player {
@@ -44,6 +47,8 @@ type PlayerRow = {
   losses: number;
   draws: number;
   avatar_url: string | null;
+  avatar_id?: string | null;
+  owner_key?: string | null;
 };
 
 function fromRow(row: PlayerRow): Player {
@@ -55,6 +60,7 @@ function fromRow(row: PlayerRow): Player {
     losses: row.losses,
     draws: row.draws,
     avatarUrl: row.avatar_url,
+    avatarId: row.avatar_id ?? null,
   };
 }
 
@@ -189,4 +195,48 @@ export async function uploadAvatar(name: string, file: File): Promise<string | n
 
   await supabase.from("players").update({ avatar_url: url }).eq("name", name);
   return url;
+}
+
+
+export type ClaimResult = { ok: true; player: Player } | { ok: false; reason: "taken" | "error" };
+
+/**
+ * Claims a unique display name for this device. Names are compared
+ * case-insensitively. Re-claiming a name this device already owns just
+ * updates the avatar; a name owned by another device is rejected.
+ */
+export async function claimPlayerName(rawName: string, avatarId: string): Promise<ClaimResult> {
+  const name = rawName.trim();
+  if (!name) return { ok: false, reason: "error" };
+
+  const supabase = getSupabase();
+  if (!supabase) return { ok: true, player: { ...(await ensurePlayer(name)), avatarId } };
+
+  const ownerKey = getDeviceKey();
+  const key = name.toLowerCase();
+
+  const { data: existing, error: readError } = await supabase.from("players").select("*").eq("name_key", key).maybeSingle();
+  if (readError) return { ok: false, reason: "error" };
+
+  if (existing) {
+    const row = existing as PlayerRow;
+    if (row.owner_key && row.owner_key !== ownerKey) return { ok: false, reason: "taken" };
+    const { data, error } = await supabase
+      .from("players")
+      .update({ owner_key: ownerKey, avatar_id: avatarId })
+      .eq("name", row.name)
+      .select()
+      .maybeSingle();
+    if (error || !data) return { ok: false, reason: "error" };
+    return { ok: true, player: fromRow(data as PlayerRow) };
+  }
+
+  const { data, error } = await supabase
+    .from("players")
+    .insert({ name, rating: DEFAULT_RATING, owner_key: ownerKey, avatar_id: avatarId })
+    .select()
+    .maybeSingle();
+  if (error) return { ok: false, reason: error.code === "23505" ? "taken" : "error" };
+  if (!data) return { ok: false, reason: "error" };
+  return { ok: true, player: fromRow(data as PlayerRow) };
 }
