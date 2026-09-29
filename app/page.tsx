@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import SiteNav from "@/components/SiteNav";
 import LiveGameCard from "@/components/LiveGameCard";
 import PlayerAvatar from "@/components/PlayerAvatar";
+import HeroKing from "@/components/HeroKing";
 import { listLiveGames, type LiveGame } from "@/lib/games";
 import { listPlayers, type Player } from "@/lib/players";
 
@@ -41,9 +41,7 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ background: "#07070A", color: "#F5F3F7" }}>
       <style>{`
-        @keyframes cxFloatPhoto { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
         @keyframes cxPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
-        .cx-king { animation: cxFloatPhoto 6s ease-in-out infinite; }
         .cx-live-dot { animation: cxPulse 1.4s ease-in-out infinite; }
         .cx-hero-bg {
           background:
@@ -103,28 +101,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <div
-              className="absolute rounded-full"
-              style={{
-                width: 320,
-                height: 320,
-                background: "radial-gradient(circle, color-mix(in srgb, var(--cx-accent) 35%, transparent), transparent 70%)",
-                filter: "blur(20px)",
-                zIndex: 0,
-              }}
-            />
-            <div className="cx-king relative" style={{ width: "clamp(220px, 26vw, 340px)", zIndex: 1 }}>
-              <Image
-                src="/images/hero-king.webp"
-                alt="A single obsidian chess king, dramatically lit"
-                width={760}
-                height={1140}
-                priority
-                style={{ width: "100%", height: "auto", filter: "drop-shadow(0 40px 70px rgba(0,0,0,0.6))" }}
-              />
-            </div>
-          </div>
+          <HeroKing />
         </section>
       </div>
 

@@ -29,3 +29,96 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Levitating king over a lit chessboard. */
+.hk-stage {
+  position: relative;
+  width: min(100%, 460px);
+  height: clamp(340px, 54vh, 580px);
+  margin-inline: auto;
+  --hk-cycle: 5.5s;
+}
+
+.hk-glow {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 90%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--cx-accent) 30%, transparent), transparent 62%);
+  filter: blur(24px);
+  pointer-events: none;
+}
+
+.hk-floor {
+  position: absolute;
+  left: 50%;
+  bottom: 3%;
+  width: 150%;
+  height: 40%;
+  transform: translateX(-50%) perspective(520px) rotateX(64deg);
+  background: repeating-conic-gradient(
+    color-mix(in srgb, var(--cx-accent) 24%, transparent) 0 25%,
+    color-mix(in srgb, var(--cx-accent) 3%, transparent) 0 50%
+  ) 0 0 / 72px 72px;
+  -webkit-mask-image: radial-gradient(closest-side, #000 18%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 18%, transparent 100%);
+  pointer-events: none;
+}
+
+.hk-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 11%;
+  width: 62%;
+  height: 9%;
+  margin-left: -31%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.7) 32%,
+    color-mix(in srgb, var(--cx-accent) 30%, transparent) 60%,
+    transparent 100%
+  );
+  filter: blur(4px);
+  animation: hk-shadow var(--hk-cycle) ease-in-out infinite;
+  pointer-events: none;
+}
+
+.hk-piece {
+  position: absolute;
+  left: 50%;
+  left: 0;
+  right: 0;
+  bottom: 19%;
+  height: 74%;
+  aspect-ratio: 760 / 1140;
+  margin-inline: auto;
+  animation: hk-float var(--hk-cycle) ease-in-out infinite;
+  will-change: transform;
+}
+
+.hk-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.55));
+}
+
+@keyframes hk-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-28px); }
+}
+
+@keyframes hk-shadow {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(0.72); opacity: 0.55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-piece,
+  .hk-shadow { animation: none; }
+}

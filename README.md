@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CHESS//X
 
-## Getting Started
+CHESS//X is a modern chess playground for people who want to play, watch, and compete without a heavy account-first experience.
 
-First, run the development server:
+The app includes:
+
+- Live games created from shareable links.
+- Local two-player games with clocks, color selection, and draw or resign actions.
+- Playable bot opponents ranging from Pawn to Obsidian King.
+- Tournaments with brackets, signups, matches, and rankings.
+- Live game watching and game review with Stockfish analysis.
+- Custom player identities, avatars, accent colors, and light or dark themes.
+
+## Stack
+
+- Next.js 16 App Router and React 19
+- TypeScript
+- Tailwind CSS 4
+- Supabase for live games, players, and tournament data
+- `chess.js` for legal chess state and move validation
+- Stockfish 18 for browser-side analysis
+
+## Run Locally
+
+Use Node.js and pnpm, then install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Available scripts:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev       # Start the development server
+pnpm lint      # Run ESLint
+pnpm build     # Create a production build
+pnpm start     # Serve the production build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Supabase Setup
 
-## Learn More
+The app works without Supabase, but live multiplayer, watchers, player rankings, and tournaments need a configured project.
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Run the SQL files in the Supabase SQL editor:
 
-## Deploy on Vercel
+1. `supabase/schema.sql` for live games and realtime updates.
+2. `supabase/tournament_schema.sql` for tournaments and signups.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The client falls back to local behavior when those variables are absent, so the UI can still be explored during development.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project Map
+
+| Path | Purpose |
+| --- | --- |
+| `app/` | Routes for play, watch, rankings, tournaments, and legal pages |
+| `components/` | Shared board, navigation, avatars, clocks, review, and theme UI |
+| `lib/` | Chess state, bot logic, Elo, Supabase access, profiles, and tournament helpers |
+| `public/pieces/stockfish/` | Browser-loaded Stockfish engine files |
+| `supabase/` | Database schema and realtime configuration |
+
+The home page hero is assembled by `components/HeroKing.tsx`, rendered from `app/page.tsx`, and styled in `app/globals.css`. It uses the committed `public/images/hero-king.webp` asset and keeps the king, glow, board floor, and shadow in separate layers so the vertical motion reads clearly.
+
+## Deploy
+
+Build the app with `pnpm build` and deploy it to a Next.js-compatible host such as Vercel. Add the two Supabase environment variables to the host before enabling live play.
