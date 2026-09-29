@@ -27,6 +27,19 @@ export default function TournamentPage() {
   const [joinAvatar] = useState(() => getProfile()?.avatarId ?? AVATAR_PRESETS[0].id);
   const [joined, setJoined] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+
+  async function copyTournamentLink() {
+    setShareError(null);
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setShareError("Could not copy the link. Please copy it from your browser address bar.");
+    }
+  }
 
   async function refresh() {
     const t = await getTournament(params.id);
@@ -98,12 +111,23 @@ export default function TournamentPage() {
     <div className="min-h-screen" style={{ background: "#07070A", color: "#F5F3F7" }}>
       <SiteNav />
       <div className="px-6 sm:px-10 py-10 max-w-4xl mx-auto">
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex items-start justify-between gap-4 mb-2">
           <h1 className="font-serif font-semibold text-2xl sm:text-[28px] tracking-tight">{tournament.name}</h1>
-          <span className="text-[11px] px-3 py-1 rounded-full capitalize" style={{ background: "rgba(255,255,255,0.05)", color: "#8f8a9c" }}>
-            {tournament.status} · {tournament.visibility}
-          </span>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-[11px] px-3 py-1 rounded-full capitalize" style={{ background: "rgba(255,255,255,0.05)", color: "#8f8a9c" }}>
+              {tournament.status} · {tournament.visibility}
+            </span>
+            <button
+              type="button"
+              onClick={copyTournamentLink}
+              className="px-3 py-1.5 rounded-full text-xs font-medium transition hover:bg-white/10"
+              style={{ border: "1px solid #23232c", color: "var(--cx-accent-light)" }}
+            >
+              {linkCopied ? "Copied" : "Copy link"}
+            </button>
+          </div>
         </div>
+        {shareError && <p className="text-xs mb-2" role="status" style={{ color: "#F43F5E" }}>{shareError}</p>}
         <p className="text-sm mb-1" style={{ color: "#8f8a9c" }}>
           Starts {new Date(tournament.startAt).toLocaleString()}
           {tournament.timeControlMinutes && ` · ${tournament.timeControlMinutes} min per player, per game`}
