@@ -40,6 +40,7 @@ export default function Board({
   legalTargets = [],
   lastMove,
   checkSquare,
+  hint,
   onSquareClick,
 }: {
   position?: Square[][];
@@ -49,6 +50,11 @@ export default function Board({
   legalTargets?: string[];
   lastMove?: { from: string; to: string } | null;
   checkSquare?: string | null;
+  /** A suggested move to draw attention to — separate from `selected`, since
+   *  it should be visible before the player has tapped anything. Tapping the
+   *  highlighted piece still goes through the normal selected/legalTargets
+   *  path; this is purely the "look here" overlay drawn underneath that. */
+  hint?: { from: string; to: string } | null;
   onSquareClick?: (square: string) => void;
 }) {
   // FLIP-style slide: on a new lastMove, place the arriving piece back at its
