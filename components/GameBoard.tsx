@@ -7,6 +7,7 @@ import Board from "./Board";
 import EvalBar from "./EvalBar";
 import GameReview, { accuracyFromAvgLoss, type PlyAnalysis } from "./GameReview";
 import { getEngine, type EngineEval } from "@/lib/engine";
+import { getBotMove, getHint, type BotTierKey } from "@/lib/bot";
 import { classifyMove, QUALITY_LABEL, QUALITY_COLOR } from "@/lib/moveQuality";
 
 type PieceType = "king" | "queen" | "rook" | "bishop" | "knight" | "pawn";
@@ -70,6 +71,7 @@ export default function GameBoard({
   remoteFen,
   remoteVersion,
   frozen,
+  bot,
 }: {
   whiteLabel?: string;
   blackLabel?: string;
@@ -88,13 +90,21 @@ export default function GameBoard({
   /** Locks the board — for when the game ended via a remote event (e.g. the
    *  opponent resigned) that this device didn't cause. */
   frozen?: boolean;
+  /** Turns the side NOT in `playAs` into a Stockfish opponent at the given
+   *  tier, moving on its own turn through the same path a human move takes.
+   *  Requires `playAs` to be set (a bot game always has a human side). */
+  bot?: { tier: BotTierKey };
 }) {
   // The Chess instance is mutable and mutated in place inside event handlers;
   // `version` is bumped alongside it purely to force a re-render. It's kept in
   // useState (not useRef) so nothing reads a ref's `.current` during render.
   const [chess, setChess] = useState(() => new Chess());
   const [version, setVersion] = useState(0);
-  const touch = () => setVersion((v) => v + 1);
+  const [hint, setHint] = useState<MoveEnd | null>(null);
+  const touch = () => {
+    setVersion((v) => v + 1);
+    setHint(null); // any move (ours, the bot's, undo, remote) makes a prior hint stale
+  };
 
   const [selected, setSelected] = useState<Square | null>(null);
   const [lastMove, setLastMove] = useState<MoveEnd | null>(null);
@@ -175,6 +185,41 @@ export default function GameBoard({
   const isDraw = chess.isDraw();
   const gameOver = isCheckmate || isStalemate || isDraw || resigned !== null;
 
+  // Bot's turn — fetch and play its move through the exact same commit path
+  // a human square-click uses (chess.move, setLastMove, touch, eval,
+  // onStateChange), so nothing downstream has to know the mover wasn't a
+  // person. Guarded by a ref (not state) against firing twice for the same
+  // position, and re-checks the position hasn't changed under it (e.g. the
+  // board was reset while the engine was thinking) before applying.
+  const botMoveInFlight = useRef(false);
+  useEffect(() => {
+    if (!bot || !playAs || gameOver || frozen || promo) return;
+    const botColor = playAs === "white" ? "black" : "white";
+    if (turn !== botColor) return;
+    if (botMoveInFlight.current) return;
+    botMoveInFlight.current = true;
+    const fenAtRequest = chess.fen();
+    getBotMove(fenAtRequest, bot.tier).then((mv) => {
+      botMoveInFlight.current = false;
+      if (!mv || chess.fen() !== fenAtRequest) return;
+      chess.move({ from: mv.from as Square, to: mv.to as Square, promotion: mv.promotion as "q" | "r" | "b" | "n" | undefined });
+      setLastMove({ from: mv.from as Square, to: mv.to as Square });
+      touch();
+      triggerLiveEval(chess.fen());
+      onStateChange?.(chess.fen(), chess.pgn());
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turn, bot, playAs, gameOver, frozen, promo]);
+
+  const [hintLoading, setHintLoading] = useState(false);
+  async function requestHint() {
+    if (hintLoading || gameOver || promo || (playAs && playAs !== turn)) return;
+    setHintLoading(true);
+    const mv = await getHint(chess.fen());
+    setHintLoading(false);
+    if (mv) setHint({ from: mv.from as Square, to: mv.to as Square });
+  }
+
   let checkSquare: string | null = null;
   if (inCheck) {
     const kingCell = chess.board().flat().find((c) => c && c.type === "k" && c.color === chess.turn());
@@ -238,11 +283,19 @@ export default function GameBoard({
 
   function undoMove() {
     if (gameOver || promo) return;
+    if (botMoveInFlight.current) return; // don't undo out from under a search in progress
     chess.undo();
+    // In a bot game, one "Undo" from the human's point of view means "let me
+    // take that back" — which requires popping the bot's reply too, or the
+    // position would just sit on the bot's turn with nothing to actually
+    // undo from the human's side. Pass-and-play (no bot) keeps the original
+    // single-ply behavior.
+    if (bot) chess.undo();
     const hist = chess.history({ verbose: true });
     const prev = hist[hist.length - 1];
     setLastMove(prev ? { from: prev.from, to: prev.to } : null);
     setSelected(null);
+    setHint(null);
     touch();
     triggerLiveEval(chess.fen());
     onStateChange?.(chess.fen(), chess.pgn());
@@ -468,13 +521,23 @@ export default function GameBoard({
           </>
         ) : (
           <>
-            {!playAs && (
+            {(!playAs || bot) && (
               <button
                 onClick={undoMove}
-                disabled={history.length === 0}
+                disabled={bot ? history.length < 2 : history.length === 0}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-[#8f8a9c] border border-[#23232c] hover:text-[#F5F3F7] hover:border-[#54493a] transition disabled:opacity-30 disabled:hover:text-[#8f8a9c] disabled:hover:border-[#23232c]"
               >
                 <UndoIcon /> Undo move
+              </button>
+            )}
+            {bot && playAs === turn && (
+              <button
+                onClick={requestHint}
+                disabled={hintLoading || !!hint}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs border transition disabled:opacity-60"
+                style={{ color: "var(--cx-accent-light)", borderColor: "color-mix(in srgb, var(--cx-accent) 40%, transparent)" }}
+              >
+                <HintIcon /> {hintLoading ? "Thinking…" : hint ? `Hint: ${hint.from} → ${hint.to}` : "Get a hint"}
               </button>
             )}
             <button
@@ -523,6 +586,16 @@ function FlagIcon() {
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 3v18" />
       <path d="M5 4h11l-2.5 4L16 12H5" />
+    </svg>
+  );
+}
+
+function HintIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+      <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z" />
     </svg>
   );
 }

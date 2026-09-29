@@ -63,8 +63,16 @@ export default function TournamentMatchPage() {
     if (mySeat !== "white") return; // black waits for the subscription below to pick up gameId
 
     let cancelled = false;
-    createLiveGame({ name: match.playerA, avatarId: "violet-king" }, START_FEN).then(async (gameId) => {
-      if (cancelled || !gameId || !match.playerB) return;
+    // Tournament games are untimed with White = playerA, exactly as before
+    // the time-control/color options existed — spelled out explicitly now
+    // that createLiveGame takes options and returns { id, seat }.
+    createLiveGame(
+      { name: match.playerA, avatarId: "violet-king" },
+      START_FEN,
+      { color: "white", timeMinutes: null, timeIncrement: 0 }
+    ).then(async (created) => {
+      if (cancelled || !created || !match.playerB) return;
+      const gameId = created.id;
       // createLiveGame only sets up White; joinLiveGame fills in Black's
       // identity and flips the row to 'active' — same path a normal
       // (non-tournament) opponent joining a game takes.

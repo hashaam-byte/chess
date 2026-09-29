@@ -7,16 +7,18 @@ import SiteNav from "@/components/SiteNav";
 import GameBoard from "@/components/GameBoard";
 import AvatarIcon from "@/components/AvatarIcon";
 import ChessQRCode from "@/components/ChessQRCode";
+import Clock from "@/components/Clock";
 import { getProfile, recordGameResult } from "@/lib/profile";
 import { getMySeat, claimSeat } from "@/lib/localIdentity";
 import {
   getLiveGame,
   joinLiveGame,
-  updateLiveGame,
+  recordMove,
   finishLiveGame,
   pingLiveGame,
   subscribeToGame,
   type LiveGame,
+  type Seat,
 } from "@/lib/games";
 
 const HEARTBEAT_MS = 20_000;
@@ -26,21 +28,28 @@ export default function PlayRoomPage() {
   const router = useRouter();
 
   const [game, setGame] = useState<LiveGame | null | undefined>(undefined);
-  const [mySeat, setMySeat] = useState<"white" | "black" | null>(null);
+  const [mySeat, setMySeat] = useState<Seat | null>(null);
   const [remoteFen, setRemoteFen] = useState<string | undefined>();
   const [remoteVersion, setRemoteVersion] = useState(0);
   const [endedRemotely, setEndedRemotely] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const finishedRef = useRef(false);
-  // Guards against a real race: the moment `joinLiveGame` writes to Supabase,
-  // this browser's own `subscribeToGame` can receive that change back over
-  // the realtime websocket before the rest of `handleJoin` has finished
-  // setting `mySeat` locally. Without this flag, that brief window looks
-  // identical to "a stranger opened an active game with no seat" and the
-  // redirect effect below bounces the *joining player* to /watch.
+  // Guards against the same join-race the redirect effect below has to
+  // account for — see the comment near that effect.
   const joiningRef = useRef(false);
 
   useEffect(() => {
+    // Safety net: "bot" is a reserved id (app/play/bot/page.tsx) and should
+    // never reach this dynamic route at all — Next.js's static-over-dynamic
+    // routing is supposed to send /play/bot there directly. If it lands
+    // here anyway (route not deployed yet, dev server needs a restart to
+    // pick up a brand-new route folder, etc.), redirect instead of calling
+    // getLiveGame("bot"), which isn't a valid id and just surfaces a raw
+    // Postgres UUID error.
+    if (params.id === "bot") {
+      router.replace("/play/bot");
+      return;
+    }
     let cancelled = false;
     getLiveGame(params.id).then((g) => {
       if (cancelled) return;
@@ -97,17 +106,17 @@ export default function PlayRoomPage() {
     joiningRef.current = true;
     try {
       const profile = getProfile();
-      const ok = await joinLiveGame(params.id, {
+      const seat = await joinLiveGame(params.id, {
         name: profile?.name || "Player 2",
         avatarId: profile?.avatarId ?? "slate-pawn",
       });
       const fresh = await getLiveGame(params.id);
       setGame(fresh);
-      if (ok) {
-        claimSeat(params.id, "black");
-        setMySeat("black");
+      if (seat) {
+        claimSeat(params.id, seat);
+        setMySeat(seat);
       }
-      // If !ok, someone else won the seat first — the effect above will
+      // If seat is null, someone else won it first — the effect above will
       // redirect us to spectate once `game` reflects the new active state.
     } finally {
       joiningRef.current = false;
@@ -115,7 +124,14 @@ export default function PlayRoomPage() {
   }
 
   function handleStateChange(fen: string, pgn: string) {
-    updateLiveGame(params.id, fen, pgn);
+    recordMove(params.id, fen, pgn).then((result) => {
+      if (result?.flagFall && !finishedRef.current) {
+        finishedRef.current = true;
+        const winner: Seat = result.flagFall === "white" ? "black" : "white";
+        setEndedRemotely(mySeat === result.flagFall ? "You ran out of time." : "Your opponent ran out of time — you win.");
+        if (mySeat) recordGameResult(winner === mySeat ? "win" : "loss");
+      }
+    });
   }
 
   function handleResult(winner: "white" | "black" | "draw") {
@@ -126,6 +142,20 @@ export default function PlayRoomPage() {
         recordGameResult(winner === "draw" ? "draw" : winner === mySeat ? "win" : "loss");
       }
     }
+  }
+
+  /** A clock hitting zero on either player's own screen ends the game the
+   *  same way an opponent resigning does — reuses the same bookkeeping.
+   *  Sets its own message rather than relying on the realtime round trip,
+   *  since by the time that arrives `finishedRef` may already be set and
+   *  the subscription handler will skip it. */
+  function handleFlagFall(seat: Seat) {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    setEndedRemotely(mySeat === seat ? "You ran out of time." : "Your opponent ran out of time — you win.");
+    const winner: Seat = seat === "white" ? "black" : "white";
+    finishLiveGame(params.id, winner);
+    if (mySeat) recordGameResult(winner === mySeat ? "win" : "loss");
   }
 
   function copyLink() {
@@ -150,15 +180,24 @@ export default function PlayRoomPage() {
     );
   }
 
-  // Waiting room — I created this game and no one has joined yet.
-  if (game.status === "waiting" && mySeat === "white") {
+  const timeLabel =
+    game.timeMinutes == null ? "Untimed" : `${game.timeMinutes}+${game.timeIncrement}`;
+
+  // Waiting room — I created this game and no one has joined yet. Since the
+  // creator can now be either color, this is just "I hold a seat while the
+  // game is still waiting" rather than assuming white specifically.
+  if (game.status === "waiting" && mySeat) {
+    const myAvatar = mySeat === "white" ? game.whiteAvatarId : game.blackAvatarId;
     return (
       <RoomShell>
         <div className="rounded-2xl p-8 text-center" style={{ maxWidth: 420, background: "#111116", border: "1px solid #23232c" }}>
           <div className="flex justify-center mb-4">
-            <AvatarIcon avatarId={game.whiteAvatarId} size={48} />
+            <AvatarIcon avatarId={myAvatar ?? "violet-king"} size={48} />
           </div>
-          <h1 className="font-serif font-semibold text-lg mb-2">Waiting for an opponent…</h1>
+          <h1 className="font-serif font-semibold text-lg mb-1">Waiting for an opponent…</h1>
+          <p className="text-xs mb-4" style={{ color: "#8f8a9c" }}>
+            You&apos;re playing {mySeat} · {timeLabel}
+          </p>
           <p className="text-sm mb-6" style={{ color: "#8f8a9c" }}>
             Send this link to whoever you want to play, or have them scan the code. The game starts the moment they open it.
           </p>
@@ -179,16 +218,21 @@ export default function PlayRoomPage() {
     );
   }
 
-  // A friend's waiting-room link — offer to join as Black.
+  // A friend's waiting-room link — offer to join whichever seat is open.
   if (game.status === "waiting" && !mySeat) {
+    const hostName = game.whiteName ?? game.blackName ?? "Someone";
+    const hostAvatar = game.whiteAvatarId ?? game.blackAvatarId ?? "violet-king";
+    const openSeat: Seat = game.whiteName == null ? "white" : "black";
     return (
       <RoomShell>
         <div className="rounded-2xl p-8 text-center" style={{ maxWidth: 420, background: "#111116", border: "1px solid #23232c" }}>
           <div className="flex justify-center mb-4">
-            <AvatarIcon avatarId={game.whiteAvatarId} size={48} />
+            <AvatarIcon avatarId={hostAvatar} size={48} />
           </div>
-          <h1 className="font-serif font-semibold text-lg mb-2">{game.whiteName} is waiting to play</h1>
-          <p className="text-sm mb-6" style={{ color: "#8f8a9c" }}>You&apos;ll play as Black.</p>
+          <h1 className="font-serif font-semibold text-lg mb-2">{hostName} is waiting to play</h1>
+          <p className="text-sm mb-6" style={{ color: "#8f8a9c" }}>
+            You&apos;ll play as {openSeat} · {timeLabel}
+          </p>
           <button
             onClick={handleJoin}
             className="w-full px-4 py-2.5 rounded-full text-sm font-semibold transition"
@@ -203,6 +247,7 @@ export default function PlayRoomPage() {
 
   // I have a seat at an active/finished game — play.
   if (mySeat) {
+    const opponent: Seat = mySeat === "white" ? "black" : "white";
     return (
       <RoomShell wide>
         {endedRemotely && (
@@ -213,8 +258,14 @@ export default function PlayRoomPage() {
             {endedRemotely}
           </div>
         )}
+        {game.timeMinutes != null && (
+          <div className="w-full flex items-center justify-between mb-3" style={{ maxWidth: 560 }}>
+            <Clock game={game} seat={opponent} label={opponent === "white" ? game.whiteName ?? "White" : game.blackName ?? "Black"} onFlagFall={handleFlagFall} />
+            <Clock game={game} seat={mySeat} label="You" onFlagFall={handleFlagFall} />
+          </div>
+        )}
         <GameBoard
-          whiteLabel={game.whiteName}
+          whiteLabel={game.whiteName ?? "White"}
           blackLabel={game.blackName ?? "Player 2"}
           playAs={mySeat}
           remoteFen={remoteFen}

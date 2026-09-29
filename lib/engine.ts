@@ -68,10 +68,67 @@ class Engine {
       };
 
       worker.addEventListener("message", onMessage);
+      // Full-strength search, always — a bot game earlier in this session
+      // may have left UCI_LimitStrength on, and eval/review must never be
+      // artificially weakened by that leftover state.
+      worker.postMessage("setoption name UCI_LimitStrength value false");
       worker.postMessage(`position fen ${fen}`);
       worker.postMessage(`go depth ${depth}`);
     });
   }
+
+  /**
+   * Returns Stockfish's chosen move (UCI form, e.g. "e2e4", or "e7e8q" for a
+   * promotion) plus the top few candidates at the root, for a given search
+   * depth and optional strength cap. Separate from evaluate() because bot
+   * play and position evaluation have different needs (a bot wants *a*
+   * move, not a score) and different engine settings (limited strength).
+   * Serialized through the same queue as evaluate() — one search at a time.
+   */
+  async getMove(fen: string, opts: { depth: number; limitElo?: number }): Promise<{ move: string | null; alternatives: string[] }> {
+    const run = this.queue.then(() => this.getMoveNow(fen, opts));
+    this.queue = run.catch(() => undefined);
+    return run;
+  }
+
+  private async getMoveNow(fen: string, opts: { depth: number; limitElo?: number }): Promise<{ move: string | null; alternatives: string[] }> {
+    await this.ensureReady();
+    const worker = this.worker;
+    if (!worker) return { move: null, alternatives: [] };
+
+    return new Promise((resolve) => {
+      const candidates = new Set<string>();
+
+      const onMessage = (e: MessageEvent) => {
+        const line = typeof e.data === "string" ? e.data : "";
+        // "info depth 3 ... pv e2e4 e7e5 ..." — the move right after "pv" is
+        // that line's root move; collecting these across the search gives a
+        // small, still-reasonable pool of alternatives for blunder injection
+        // to pick from, rather than a truly random legal move.
+        const pvMatch = line.match(/ pv (\S+)/);
+        if (pvMatch) candidates.add(pvMatch[1]);
+        if (line.startsWith("bestmove")) {
+          worker.removeEventListener("message", onMessage);
+          const best = line.split(" ")[1] ?? null;
+          resolve({ move: best, alternatives: Array.from(candidates) });
+        }
+      };
+
+      worker.addEventListener("message", onMessage);
+      // Explicitly set every time (never assume prior state) — this is the
+      // one call site allowed to weaken the engine, and it must never leak
+      // into a later evaluate() call.
+      if (opts.limitElo) {
+        worker.postMessage("setoption name UCI_LimitStrength value true");
+        worker.postMessage(`setoption name UCI_Elo value ${opts.limitElo}`);
+      } else {
+        worker.postMessage("setoption name UCI_LimitStrength value false");
+      }
+      worker.postMessage(`position fen ${fen}`);
+      worker.postMessage(`go depth ${opts.depth}`);
+    });
+  }
+
 
   terminate() {
     this.worker?.terminate();

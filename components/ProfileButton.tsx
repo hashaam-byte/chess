@@ -1,14 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AvatarIcon from "./AvatarIcon";
 import { AVATAR_PRESETS } from "@/lib/avatars";
 import { getProfile, saveProfile, blankProfile, type Profile } from "@/lib/profile";
 
 export default function ProfileButton() {
-  const [profile, setProfile] = useState<Profile | null>(() => getProfile());
+  // Seeded as null on both server and client's first render — reading
+  // getProfile() straight into useState's initializer (the original code)
+  // runs that initializer during hydration too, where localStorage IS
+  // available, producing a different value than the server had and
+  // triggering a hydration mismatch. Loading the real value in an effect
+  // (client-only, post-hydration) avoids that; the cost is a brief flash
+  // from the default avatar to the real one right after mount.
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Profile>(() => getProfile() ?? blankProfile());
+  const [draft, setDraft] = useState<Profile>(blankProfile());
+
+  useEffect(() => {
+    setProfile(getProfile());
+  }, []);
 
   function openEditor() {
     setProfile(getProfile()); // pick up any stats recorded since this button last rendered
