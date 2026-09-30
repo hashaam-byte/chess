@@ -432,6 +432,7 @@ export default function GameBoard({
           legalTargets={legalTargets}
           lastMove={lastMove}
           checkSquare={checkSquare}
+          hint={hint}
           onSquareClick={handleSquareClick}
         />
 

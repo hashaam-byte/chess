@@ -86,7 +86,7 @@ With no configuration, the app runs entirely in your browser:
 2. In the **SQL editor**, run these files in order:
    1. [`supabase/schema.sql`](supabase/schema.sql) for live games and realtime
    2. [`supabase/tournament_schema.sql`](supabase/tournament_schema.sql) for tournaments and signups
-   3. [`supabase/players_schema.sql`](supabase/players_schema.sql) for rankings and the `avatars` bucket
+   3. [`supabase/player.sql`](supabase/player.sql) for rankings and the `avatars` bucket
 3. Copy the environment template and fill in your project's URL and anon key (**Project Settings → API**):
 
    ```bash

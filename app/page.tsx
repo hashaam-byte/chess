@@ -44,6 +44,7 @@ export default function Home() {
         @keyframes cxPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
         .cx-live-dot { animation: cxPulse 1.4s ease-in-out infinite; }
         .cx-hero-bg {
+          overflow-x: clip; /* the hero-king floor is wider than its column; never let it widen the page */
           background:
             radial-gradient(ellipse 900px 560px at 18% 0%, color-mix(in srgb, var(--cx-accent) 16%, transparent), transparent 65%),
             radial-gradient(ellipse 700px 500px at 100% 30%, color-mix(in srgb, var(--cx-accent-light) 10%, transparent), transparent 60%),

@@ -144,6 +144,8 @@ export default function Board({
             const isTarget = legalTargets.includes(sq);
             const isLastMove = lastMove && (lastMove.from === sq || lastMove.to === sq);
             const isCheck = checkSquare === sq;
+            const isHintFrom = hint?.from === sq;
+            const isHintTo = hint?.to === sq;
             const isSliding = slide?.sq === sq;
             const Tag = onSquareClick ? "button" : "div";
 
@@ -170,6 +172,17 @@ export default function Board({
                     className="absolute inset-0 dl-check-pulse"
                     style={{
                       background: "radial-gradient(circle, rgba(214,69,69,0.8) 0%, rgba(214,69,69,0.15) 70%)",
+                    }}
+                  />
+                )}
+                {(isHintFrom || isHintTo) && (
+                  <div
+                    className="absolute inset-0 dl-hint-pulse"
+                    style={{
+                      background: isHintTo
+                        ? "radial-gradient(circle, rgba(245,190,60,0.55) 0%, rgba(245,190,60,0.18) 70%)"
+                        : "rgba(245,190,60,0.30)",
+                      boxShadow: "inset 0 0 0 3px rgba(245,190,60,0.95)",
                     }}
                   />
                 )}
@@ -254,6 +267,14 @@ export default function Board({
           50% { opacity: 1; }
         }
         .dl-check-pulse { animation: dlCheckPulse 1s ease-in-out infinite; }
+        @keyframes dlHintPulse {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+        .dl-hint-pulse { animation: dlHintPulse 1.2s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .dl-hint-pulse, .dl-target-dot, .dl-check-pulse { animation: none; }
+        }
       `}</style>
     </div>
   );
