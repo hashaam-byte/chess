@@ -30,7 +30,11 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Levitating king over a lit chessboard. */
+/* ───────────────────────── Hero king ─────────────────────────
+   Levitating king over a lit chessboard. Only .hk-piece and .hk-shadow
+   animate (same duration, so they stay in sync). Everything is tinted with
+   the user's accent via --cx-accent so theme changes just work. */
+
 .hk-stage {
   position: relative;
   width: min(100%, 460px);
@@ -58,10 +62,11 @@ body {
   width: 150%;
   height: 40%;
   transform: translateX(-50%) perspective(520px) rotateX(64deg);
-  background: repeating-conic-gradient(
-    color-mix(in srgb, var(--cx-accent) 24%, transparent) 0 25%,
-    color-mix(in srgb, var(--cx-accent) 3%, transparent) 0 50%
-  ) 0 0 / 72px 72px;
+  background:
+    repeating-conic-gradient(
+      color-mix(in srgb, var(--cx-accent) 24%, transparent) 0 25%,
+      color-mix(in srgb, var(--cx-accent) 3%, transparent) 0 50%
+    ) 0 0 / 72px 72px;
   -webkit-mask-image: radial-gradient(closest-side, #000 18%, transparent 100%);
   mask-image: radial-gradient(closest-side, #000 18%, transparent 100%);
   pointer-events: none;
@@ -75,6 +80,7 @@ body {
   height: 9%;
   margin-left: -31%;
   border-radius: 50%;
+  /* dark core (the shadow) inside an accent-lit ring (light pooling on the board) */
   background: radial-gradient(
     ellipse at center,
     rgba(0, 0, 0, 0.9) 0%,
@@ -89,13 +95,12 @@ body {
 
 .hk-piece {
   position: absolute;
-  left: 50%;
   left: 0;
   right: 0;
+  margin-inline: auto;
   bottom: 19%;
   height: 74%;
-  aspect-ratio: 760 / 1140;
-  margin-inline: auto;
+  aspect-ratio: 348 / 862;
   animation: hk-float var(--hk-cycle) ease-in-out infinite;
   will-change: transform;
 }
@@ -106,6 +111,20 @@ body {
   height: 100%;
   user-select: none;
   filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.55));
+}
+
+/* Accent rim light, clipped to the king's silhouette. */
+.hk-rim {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: url(/images/king-cutout.webp) center / 100% 100% no-repeat;
+  mask: url(/images/king-cutout.webp) center / 100% 100% no-repeat;
+  background:
+    linear-gradient(100deg, var(--cx-accent-light) 0%, transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--cx-accent-light) 70%, transparent) 0%, transparent 22%);
+  mix-blend-mode: screen;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 @keyframes hk-float {
