@@ -59,7 +59,7 @@ function MiniBoard({ fen }: { fen: string }) {
         row.map((cell, c) => {
           const light = (r + c) % 2 === 0;
           return (
-            <div key={`${r}-${c}`} className="relative" style={{ background: light ? "#2a2a33" : "#17171c" }}>
+            <div key={`${r}-${c}`} className="relative" style={{ background: light ? "var(--cx-sq-light, #2a2a33)" : "var(--cx-sq-dark, #17171c)" }}>
               {cell && (
                 <Image
                   src={`/pieces/${cell.color}_${cell.type}.png`}

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { DEFAULT_THEME, THEME_STORAGE_KEY, deriveTheme, type AccentTheme } from "@/lib/theme";
+import { BOARD_STORAGE_KEY, DEFAULT_BOARD, boardById, type BoardTheme } from "@/lib/boardTheme";
 
 function applyTheme(theme: AccentTheme) {
   const root = document.documentElement;
@@ -10,8 +11,16 @@ function applyTheme(theme: AccentTheme) {
   root.style.setProperty("--cx-accent-dark", theme.dark);
 }
 
+function applyBoard(board: BoardTheme) {
+  const root = document.documentElement;
+  root.style.setProperty("--cx-sq-light", board.light);
+  root.style.setProperty("--cx-sq-dark", board.dark);
+}
+
 type ThemeContextValue = {
   theme: AccentTheme;
+  board: BoardTheme;
+  setBoard: (board: BoardTheme) => void;
   setPreset: (theme: AccentTheme) => void;
   setCustomAccent: (hex: string) => void;
 };
@@ -20,6 +29,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<AccentTheme>(DEFAULT_THEME);
+  const [board, setBoardState] = useState<BoardTheme>(DEFAULT_BOARD);
 
   useEffect(() => {
     // Deferred to a microtask so reading localStorage (and the resulting
@@ -38,7 +48,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       }
       applyTheme(DEFAULT_THEME);
     });
+    queueMicrotask(() => {
+      try {
+        const saved = boardById(window.localStorage.getItem(BOARD_STORAGE_KEY));
+        setBoardState(saved);
+        applyBoard(saved);
+      } catch {
+        applyBoard(DEFAULT_BOARD);
+      }
+    });
   }, []);
+
+  function persistBoard(next: BoardTheme) {
+    setBoardState(next);
+    applyBoard(next);
+    try {
+      window.localStorage.setItem(BOARD_STORAGE_KEY, next.id);
+    } catch {
+      // localStorage unavailable — board theme still applies for this session
+    }
+  }
 
   function persist(next: AccentTheme) {
     setTheme(next);
@@ -54,6 +83,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     <ThemeContext.Provider
       value={{
         theme,
+        board,
+        setBoard: persistBoard,
         setPreset: persist,
         setCustomAccent: (hex: string) => persist(deriveTheme(hex)),
       }}

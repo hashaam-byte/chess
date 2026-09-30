@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { useTheme } from "./ThemeProvider";
 import { ACCENT_PRESETS } from "@/lib/theme";
+import { BOARD_PRESETS } from "@/lib/boardTheme";
 
 export default function ThemeSwitcher() {
-  const { theme, setPreset, setCustomAccent } = useTheme();
+  const { theme, board, setBoard, setPreset, setCustomAccent } = useTheme();
   const [open, setOpen] = useState(false);
 
   return (
     <div className="fixed bottom-5 right-5 z-40">
       {open && (
         <div
-          className="absolute bottom-14 right-0 rounded-2xl p-4 w-64"
+          className="absolute bottom-14 right-0 rounded-2xl p-4 w-72"
           style={{
             background: "#111116",
             border: "1px solid rgba(255,255,255,0.1)",
@@ -49,12 +50,41 @@ export default function ThemeSwitcher() {
               {theme.accent}
             </span>
           </label>
+
+          <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+            <p className="text-xs font-semibold mb-3 flex items-baseline justify-between" style={{ color: "#F5F3F7" }}>
+              Board
+              <span className="font-normal text-[11px]" style={{ color: "#8f8a9c" }}>
+                {board.name}
+              </span>
+            </p>
+            <div className="grid grid-cols-6 gap-2">
+              {BOARD_PRESETS.map((b) => {
+                const selected = board.id === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => setBoard(b)}
+                    title={b.name}
+                    aria-label={`Use ${b.name} board`}
+                    aria-pressed={selected}
+                    className="w-9 h-9 rounded-md overflow-hidden flex-shrink-0 transition-transform hover:scale-110"
+                    style={{
+                      // 2×2 checker swatch of the actual square colours
+                      background: `conic-gradient(${b.dark} 0 25%, ${b.light} 0 50%, ${b.dark} 0 75%, ${b.light} 0)`,
+                      boxShadow: selected ? "0 0 0 2px #111116, 0 0 0 4px var(--cx-accent)" : "inset 0 0 0 1px rgba(255,255,255,0.12)",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
 
       <button
         onClick={() => setOpen((v) => !v)}
-        aria-label="Change accent color"
+        aria-label="Change colors"
         className="w-11 h-11 rounded-full flex items-center justify-center transition-transform hover:scale-105"
         style={{
           background: `linear-gradient(155deg, var(--cx-accent-light), var(--cx-accent-dark))`,

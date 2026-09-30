@@ -28,7 +28,7 @@ Chess in the browser with no accounts and no waiting rooms. Send a link to a fri
 
 **Climb the rankings.** Standard Elo, starting at 1200, with a podium for the top three.
 
-**Make it yours.** Pick an avatar or upload a photo, and change the accent color of the entire site from the dot in the corner.
+**Make it yours.** Pick an avatar or upload a photo. From the palette button in the corner, change the accent color of the whole site and choose your board: Midnight, Cream & Red, Forest, Walnut, Ocean or Plum. Your choices are saved on your device.
 
 ## The bots
 
@@ -132,6 +132,7 @@ lib/
   bot.ts              Bot tiers and move selection
   bracket.ts          Single-elimination seeding and byes
   elo.ts              Rating maths
+  boardTheme.ts       Board colour presets
   games.ts            Live game persistence and realtime
   players.ts          Profiles and ratings (Supabase or local)
 supabase/             SQL schemas

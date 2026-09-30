@@ -159,7 +159,7 @@ export default function Board({
                 aria-selected={isSelected}
                 className="dl-square relative flex items-center justify-center appearance-none border-0 p-0 m-0 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--cx-accent)]"
                 style={{
-                  background: isDark ? "#1a1a24" : "#d8d6e2",
+                  background: isDark ? "var(--cx-sq-dark, #1a1a24)" : "var(--cx-sq-light, #d8d6e2)",
                   cursor: onSquareClick ? "pointer" : "default",
                   font: "inherit",
                 }}
@@ -196,7 +196,7 @@ export default function Board({
                 {isLastRank && (
                   <span
                     className="absolute bottom-[3px] right-[5px] text-[10px] font-semibold select-none leading-none"
-                    style={{ color: isDark ? "#d8d6e2" : "#1a1a24", opacity: 0.75, zIndex: 2 }}
+                    style={{ color: isDark ? "var(--cx-sq-light, #d8d6e2)" : "var(--cx-sq-dark, #1a1a24)", opacity: 0.85, zIndex: 2 }}
                   >
                     {FILES[c]}
                   </span>
@@ -204,7 +204,7 @@ export default function Board({
                 {c === 0 && (
                   <span
                     className="absolute top-[3px] left-[5px] text-[10px] font-semibold select-none leading-none"
-                    style={{ color: isDark ? "#d8d6e2" : "#1a1a24", opacity: 0.75, zIndex: 2 }}
+                    style={{ color: isDark ? "var(--cx-sq-light, #d8d6e2)" : "var(--cx-sq-dark, #1a1a24)", opacity: 0.85, zIndex: 2 }}
                   >
                     {8 - r}
                   </span>
